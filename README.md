@@ -1,8 +1,8 @@
 # Work Plan
 
 ## Table of Contents
-### 1. Learn How to Use Git from bash terminal
-####        i. Create a github.com account. OK
+1. Learn How to Use Git from bash terminal
+    1. Create a github.com account. OK
 ####        ii. Create an SSH key. OK
 ####        iii. Create a Repository. OK
 #####           a. Create Repository then clone to local. OK
