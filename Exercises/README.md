@@ -9,11 +9,8 @@
     1.  Check Results
     1.  Iterate
 
-1. Kaggle Exercise Projects
+1. Kaggle Exercises
     1.  Digit Recognizer
     1.  Titanic
     1.  NLP with Disaster Tweets
     1.  Petals to the metal
-
-1.  Personal Projects
-    1.  Electronic Components Vendor Comparison
