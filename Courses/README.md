@@ -3,7 +3,7 @@
 ## MIT Open Courseware
 
 
-[6.0001](https://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-0001-introduction-to-computer-science-and-programming-in-python-fall-2016/)	Introduction to Computer Science Programming in Python
+[6.0001](https://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-0001-introduction-to-computer-science-and-programming-in-python-fall-2016/)      Introduction to Computer Science Programming in Python
 
 [6.006](https://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-006-introduction-to-algorithms-fall-2011/)	Introduction to Algorithms
 
