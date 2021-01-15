@@ -2,16 +2,16 @@
 
 ## Table of Contents
 1. Learn How to Use Git from bash terminal
-    1. Create a github.com account. OK
-    1. Create an SSH key. OK
-    1. Create a Repository. OK
-        1. Create Repository then clone to local. OK
-        1. Create/Use existing folder and remote add the repo OK
-    1. Generate a REAME.md. OK
-    1. Initialize a remote repository. OK
-    1. vi. Add a file to the git repository. OK
-    1. Commit a repository. OK
-    1. Push a repository. OK
+    1. Create a github.com account.
+    1. Create an SSH key.
+    1. Create a Repository.
+        1. Create Repository then clone to local.
+        1. Create/Use existing folder and remote add the repo
+    1. Generate a REAME.md.
+    1. Initialize a remote repository.
+    1. vi. Add a file to the git repository.
+    1. Commit a repository.
+    1. Push a repository.
     1. Branch a repository.
 
 1. General Data Science Project Workflow
