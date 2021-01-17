@@ -1,1 +1,1 @@
-# This is a repository for my practice exercises in python.
+# This is a repository for my practice exercises.
