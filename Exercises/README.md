@@ -1,1 +1,1 @@
-# This is a repository for my practice exercises.
+# Here are my practice exercises.
