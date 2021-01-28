@@ -1,5 +1,3 @@
-Compound Query Practice
-
 CREATE TABLE employee (
     emp_id INT PRIMARY KEY,
     first_name VARCHAR(40),
@@ -125,51 +123,79 @@ INSERT INTO works_with VALUES(107, 405, 26000);
 INSERT INTO works_with VALUES(102, 406, 15000);
 INSERT INTO works_with VALUES(105, 406, 130000);
 
-SELECT * FROM client ORDER BY client_id;
+---------PRACTICE-----------
 
-SELECT * FROM works_with ORDER BY emp_id;
+SELECT * FROM client 
+ORDER BY client_id;
 
-SELECT * FROM employee ORDER BY emp_id;
+SELECT * FROM works_with 
+ORDER BY emp_id;
 
-SELECT * FROM branch ORDER BY branch_id;
+SELECT * FROM employee 
+ORDER BY emp_id;
 
-SELECT * FROM employee ORDER BY salary DESC;
+SELECT * FROM branch 
+ORDER BY branch_id;
 
-SELECT * FROM employee ORDER BY sex, last_name, first_name ;
+SELECT * FROM employee 
+ORDER BY salary DESC;
 
-SELECT * FROM employee LIMIT 5 ;
+SELECT * FROM employee 
+ORDER BY sex, last_name, first_name ;
 
-SELECT last_name AS surname, first_name AS forename FROM employee ;
+SELECT * FROM employee 
+LIMIT 5 ;
 
-SELECT DISTINCT sex FROM employee;
+SELECT last_name AS surname, first_name AS forename 
+FROM employee ;
 
-SELECT DISTINCT supply_type FROM branch_supplier;
+SELECT DISTINCT sex 
+FROM employee;
 
-SELECT COUNT(emp_id) FROM employee;
+SELECT DISTINCT supply_type 
+FROM branch_supplier;
 
-SELECT COUNT(super_id) FROM employee;
+SELECT COUNT(emp_id) 
+FROM employee;
 
-SELECT COUNT(emp_id) FROM employee WHERE sex = 'M' AND birth_day < '1975-12-31';
+SELECT COUNT(super_id) 
+FROM employee;
 
-SELECT last_name, first_name, birth_day FROM employee WHERE sex = 'M' AND birth_day < '1975-12-31' ORDER BY birth_day ASC;
+SELECT COUNT(emp_id) 
+FROM employee 
+WHERE sex = 'M' AND birth_day < '1975-12-31';
 
-SELECT AVG(salary) FROM employee;
+SELECT last_name, first_name, birth_day 
+FROM employee 
+WHERE sex = 'M' AND birth_day < '1975-12-31' ORDER BY birth_day ASC;
 
-SELECT AVG(salary) FROM employee WHERE sex = 'F';
+SELECT AVG(salary) 
+FROM employee;
 
-SELECT SUM(salary) FROM employee;
+SELECT AVG(salary) 
+FROM employee WHERE sex = 'F';
 
-SELECT COUNT(sex) AS 'Number', sex FROM employee GROUP BY sex;
+SELECT SUM(salary) 
+FROM employee;
 
-SELECT emp_id, SUM(total_sales) FROM works_with GROUP BY emp_id ORDER BY SUM(total_sales) DESC;
+SELECT COUNT(sex) AS 'Number', sex 
+FROM employee GROUP BY sex;
 
-SELECT client_id, SUM(total_sales) FROM works_with GROUP BY client_id ORDER BY SUM(total_sales) DESC;
+SELECT emp_id, SUM(total_sales) 
+FROM works_with GROUP BY emp_id ORDER BY SUM(total_sales) DESC;
 
-SELECT * FROM branch_supplier WHERE supplier_name LIKE '%LABLES';
+SELECT client_id, SUM(total_sales) 
+FROM works_with GROUP BY client_id ORDER BY SUM(total_sales) DESC;
 
-SELECT first_name, last_name, birth_day FROM employee WHERE birth_day LIKE '____-02%';
+SELECT * FROM branch_supplier 
+WHERE supplier_name LIKE '%LABLES';
 
-SELECT client_name FROM client WHERE client_name LIKE '%school%';
+SELECT first_name, last_name, birth_day 
+FROM employee WHERE birth_day LIKE '____-02%';
+
+SELECT client_name 
+FROM client 
+WHERE client_name LIKE '%school%';
 
 SELECT first_name FROM employee
 UNION
@@ -182,13 +208,106 @@ SELECT supplier_name, branch_id FROM branch_supplier;
 INSERT INTO branch VALUES(4, 'Buffalo', NULL, NULL);
 
 SELECT employee.emp_id, employee.first_name, branch.branch_name
-FROM employee JOIN branch ON employee.emp_id = branch.mgr_id;
+FROM employee 
+JOIN branch ON employee.emp_id = branch.mgr_id;
 
 SELECT employee.emp_id, employee.first_name, branch.branch_name
-FROM employee JOIN branch ON employee.super_id = branch.mgr_id;
+FROM employee 
+JOIN branch ON employee.super_id = branch.mgr_id;
 
 SELECT employee.emp_id, employee.first_name, branch.branch_name
-FROM employee LEFT JOIN branch ON employee.super_id = branch.mgr_id;
+FROM employee 
+LEFT JOIN branch ON employee.super_id = branch.mgr_id;
 
 SELECT employee.emp_id, employee.first_name, branch.branch_name
-FROM branch RIGHT JOIN employee ON employee.emp_id = branch.mgr_id;
+FROM branch 
+RIGHT JOIN employee ON employee.emp_id = branch.mgr_id;
+
+SELECT emp_id 
+FROM works_with 
+WHERE works_with.total_sales > 30000;
+
+SELECT employee.first_name, employee.last_name 
+FROM employee 
+WHERE employee.emp_id IN (
+    SELECT works_with.emp_id
+    FROM works_with
+    WHERE works_with.total_sales > 30000
+) ;
+
+SELECT clinet.client_name
+FROM client
+WHERE;
+
+SELECT employee.emp_id
+FROM employee
+WHERE first_name = 'Michael' AND last_name = 'Scott';
+
+SELECT branch.branch_id
+FROM branch
+WHERE branch.mgr_id = (
+    SELECT employee.emp_id
+    FROM employee
+    WHERE first_name = 'Michael' AND last_name = 'Scott'
+);
+
+SELECT client.client_name
+FROM client
+WHERE client.branch_id = (
+    SELECT branch.branch_id
+    FROM branch
+    WHERE branch.mgr_id = (
+        SELECT employee.emp_id
+        FROM employee
+        WHERE first_name = 'Michael' AND last_name = 'Scott'
+        LIMIT 1
+    )
+);
+
+SELECT * FROM employee;
+
+UPDATE employee
+SET 
+    sex = 'F',
+    first_name = 'Josie'
+WHERE 
+    emp_id = 106;
+
+---EXECUTE IN TERMINAL WITH 'mysql -u root -p' ---
+    DELIMITER $$
+        CREATE
+        TRIGGER my_trigger BEFORE INSERT
+        ON employee
+        FOR EACH ROW BEGIN 
+            IF NEW.salary > 100000 THEN
+                INSERT INTO trigger_test VALUES('ADDED NEW SUPERVISOR');
+            ELSEIF NEW.salary > 70000 THEN
+                INSERT INTO trigger_test VALUES('ADDED SENIOR EMLPOYEE');
+            ELSE
+                INSERT INTO trigger_test VALUE('ADDED JUNIOR EMPLOYEE');
+            END IF;
+        END$$
+            
+        
+    CREATE
+        TRIGGER my_trigger2 BEFORE INSERT
+        ON employee
+        FOR EACH ROW BEGIN
+            INSERT INTO trigger_test VALUES(NEW.first_name);
+        END$$
+DELIMITER ;
+
+CREATE TABLE trigger_test(
+    message VARCHAR(100)
+);
+
+INSERT INTO employee
+VALUES(109, 'Oscar', 'Martinez', '1968-02-19', 'M', 72000, 106, 3);
+
+INSERT INTO employee
+VALUES(110, 'Kevin', 'Malone', '1978-02-19', 'M', 69000, 106, 3);
+
+INSERT INTO employee
+VALUES(111, 'Pam', 'Beesly', '1988-02-19', 'F', 69000, 106, 3);
+
+SELECT * FROM trigger_test;
