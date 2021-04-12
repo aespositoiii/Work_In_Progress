@@ -13,18 +13,31 @@ src2gray = cv.cvtColor(src2, cv.COLOR_BGR2GRAY)
 print(src.dtype)
 print(srcgray.dtype)
 cv.imshow('a window', src)
-cv.waitKey(5000)
+cv.waitKey(500)
 cv.imshow('another window', srcgray)
-cv.waitKey(5000)
+cv.waitKey(500)
 cv.imshow('an other window', src2)
-cv.waitKey(5000)
-im_reg_mapper = cv.reg_MapperGradEuclid()
-a = im_reg_mapper.calculate(src, src2)
-b = im_reg_mapper.getMap()
-c = a.warp(src2)
+cv.waitKey(500)
+im_reg_mapper = cv.reg_MapperGradShift()
+c = src2
+for i in range(50):
+    a = im_reg_mapper.calculate(src, c)
+    c = a.warp(c)
+    ind = 0
+    if i%10==0:
+        for i in range(10):
+            ind = (ind+1) % 2
+
+            if ind == 0:
+                cv.imshow("Image", src)
+                cv.waitKey(1)
+            else:
+                cv.imshow("Image", c )
+                cv.waitKey(1)
+
 print(a, '\n\n', type(a))
-print(b, '\n\n', type(b))
 print(c.shape, '\n\n', type(c), '\n\n', src.shape)
 cv.imshow('another other window', (src+c) // 2 )
-cv.waitKey(0)
+
+
 

@@ -31,7 +31,7 @@ def main(argv):
     # Remove noise by blurring with a Gaussian filter
     src = cv.GaussianBlur(src, (3, 3), 0)
     # [reduce_noise]
-
+ 
     # [convert_to_gray]
     # Convert the image to grayscale
     src_gray = cv.cvtColor(src, cv.COLOR_BGR2GRAY)
@@ -49,22 +49,30 @@ def main(argv):
     # [convert]
     # converting back to uint8
     abs_dst = cv.convertScaleAbs(dst)
-    ret,abs_dst_disp = cv.threshold(abs_dst,np.median(abs_dst[abs_dst>10])+np.std(abs_dst[abs_dst>10]),255,cv.THRESH_TOZERO)
+    #ret,abs_dst_disp = cv.threshold(abs_dst,np.median(abs_dst[abs_dst>10])+np.std(abs_dst[abs_dst>10]),255,cv.THRESH_TOZERO)
     
-    abs_dst = cv.GaussianBlur(abs_dst, (9,9),0)
+    
     #plt.hist(abs_dst[abs_dst>0].ravel(),256,[0,256]); plt.show()
     # [convert]
     print(abs_dst.max())
     print(abs_dst.min())
     print(np.unique(abs_dst).shape)
 
+    abs_dst = (abs_dst/(np.median(abs_dst[abs_dst>0])-np.std(abs_dst[abs_dst>0])))**2
+    abs_dst = (abs_dst/abs_dst.max())*255
+    abs_dst = abs_dst.astype('uint8')
+
     # [display]
     cv.imshow(window_name, abs_dst)
     print(src.shape, '\n\n', abs_dst.shape)
     cv.waitKey(0)
+   
+   
+
     # [display]
+
+
     ind = 0
-    
     while True:
         ind = (ind + 1) % 256
         #n = np.median(abs_dst[abs_dst>10])+np.std(abs_dst[abs_dst>10])

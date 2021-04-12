@@ -51,7 +51,7 @@ def main(argv):
     abs_dst = cv.convertScaleAbs(dst)
     ret,abs_dst_disp = cv.threshold(abs_dst,np.median(abs_dst[abs_dst>10])+np.std(abs_dst[abs_dst>10]),255,cv.THRESH_TOZERO)
     
-    abs_dst = cv.GaussianBlur(abs_dst, (9,9),0)
+    
     #plt.hist(abs_dst[abs_dst>0].ravel(),256,[0,256]); plt.show()
     # [convert]
     print(abs_dst.max())
@@ -65,6 +65,16 @@ def main(argv):
     # [display]
     ind = 0
     
+    while True:
+        abs_dst = cv.GaussianBlur(abs_dst, (25,25),0)
+        abs_dst = (abs_dst/abs_dst.max())*255
+        abs_dst = abs_dst.astype('uint8')
+        cv.imshow('window', abs_dst)
+        c = cv.waitKey(10)
+        if c == 26:
+            break
+
+    ind = 0
     while True:
         ind = (ind + 1) % 256
         #n = np.median(abs_dst[abs_dst>10])+np.std(abs_dst[abs_dst>10])
