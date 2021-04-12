@@ -1,9 +1,30 @@
 import cv2 as cv
 import numpy as np
 
-src = cv.imread('/Users/anthonyesposito/Pictures/Birbs/ExportDSCF0110.jpg')
-src2 = cv.imread('/Users/anthonyesposito/Pictures/Birbs/ExportDSCF0875.jpg')
+src = cv.imread('/Users/anthonyesposito/Pictures/macroni/Rosasite_w_Conacalcite/1/JPG/ExportDSCF69412022-43-07.jpg')
+src2 = cv.imread('/Users/anthonyesposito/Pictures/macroni/Rosasite_w_Conacalcite/1/JPG/ExportDSCF69422022-43-14.jpg')
+srcgray = cv.cvtColor(src, cv.COLOR_BGR2GRAY)
+src2gray = cv.cvtColor(src2, cv.COLOR_BGR2GRAY)
+#src = src.astype('float64')
+#src2 = src2.astype('float64')
+#srcgray = srcgray.astype('float64')
+#src2gray = src2gray.astype('float64')
+
+print(src.dtype)
+print(srcgray.dtype)
 cv.imshow('a window', src)
 cv.waitKey(5000)
-cv.imshow('another window', src2)
+cv.imshow('another window', srcgray)
 cv.waitKey(5000)
+cv.imshow('an other window', src2)
+cv.waitKey(5000)
+im_reg_mapper = cv.reg_MapperGradEuclid()
+a = im_reg_mapper.calculate(src, src2)
+b = im_reg_mapper.getMap()
+c = a.warp(src2)
+print(a, '\n\n', type(a))
+print(b, '\n\n', type(b))
+print(c.shape, '\n\n', type(c), '\n\n', src.shape)
+cv.imshow('another other window', (src+c) // 2 )
+cv.waitKey(0)
+
