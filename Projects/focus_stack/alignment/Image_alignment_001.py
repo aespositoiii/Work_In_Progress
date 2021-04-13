@@ -1,5 +1,6 @@
 import cv2 as cv
 import numpy as np
+import time
 
 # Read the images to be aligned
 im1 =  cv.imread("/Users/anthonyesposito/Pictures/macroni/Rosasite_w_Conacalcite/1/JPG/ExportDSCF69412022-43-07.jpg");
@@ -31,6 +32,8 @@ termination_eps = 1e-3;
 # Define termination criteria
 criteria = (cv.TERM_CRITERIA_EPS | cv.TERM_CRITERIA_COUNT, number_of_iterations,  termination_eps)
 
+t1 = time.time()
+
 # Run the ECC algorithm. The results are stored in warp_matrix.
 cc, warp_matrix = cv.findTransformECC(im1_gray,im2_gray,warp_matrix, warp_mode, criteria, None, 1)
 
@@ -53,14 +56,15 @@ ind = 0
     else:
         cv.imshow("Image", im2_aligned[1500:1600,1500:1600] )
         cv.waitKey(100)'''
+print(time.time() - t1)
 
 for i in range(100):
     ind = (ind+1) % 2
 
     if ind == 0:
         cv.imshow("Image", im1)
-        cv.waitKey(100)
+        cv.waitKey(10)
     else:
         cv.imshow("Image", im2_aligned)
-        cv.waitKey(100)
+        cv.waitKey(10)
 
