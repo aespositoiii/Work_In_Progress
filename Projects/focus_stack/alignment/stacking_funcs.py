@@ -2,7 +2,21 @@ import sys
 import cv2 as cv
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 import time
+
+def get_images(directory):
+    a = os.walk(directory)
+    for root, dirs, files in a:
+        b = files
+    
+    images = []
+    
+    for i in range(len(b)):
+        images.append(cv.imread(directory+b[i], cv.IMREAD_COLOR))
+        
+    
+    return images
 
 def laplace_threshold(src, thresh=15):
     # [variables]
@@ -41,7 +55,9 @@ def laplace_threshold(src, thresh=15):
     ret,abs_dst = cv.threshold(abs_dst, thresh,255,cv.THRESH_TOZERO)
     abs_dst_align = abs_dst
 
-    return abs_dst_align
+    abs_dst_check = np.max(cv.GaussianBlur(abs_dst, (21,21),0))
+
+    return abs_dst_align, abs_dst_check
     
 def mask_blur(abs_dst, j=3):
 
@@ -57,7 +73,7 @@ def mask_blur(abs_dst, j=3):
     abs_dst = ( abs_dst ) / peak_new 
     
     return abs_dst
-
+"""
 imageName = '/Users/anthonyesposito/Pictures/macroni/Rosasite_w_Conacalcite/1/JPG/ExportDSCF69382022-42-50.jpg'
 
 img = cv.imread(imageName, cv.IMREAD_COLOR) # Load an Image
@@ -77,6 +93,4 @@ cv.waitKey(5000)
 print('c')
 cv.imshow('window', blurred_align)
 cv.waitKey(5000)
-
-
-
+"""
