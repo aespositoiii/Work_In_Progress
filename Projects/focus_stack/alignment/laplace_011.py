@@ -8,13 +8,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import time
 
-def blurred_laplace(src):
+def laplace_threshold(src, thresh=15):
     # [variables]
     # Declare the variables we are going to use
     t1 = time.time()
     ddepth = cv.CV_16S
     kernel_size = 3
-    window_name = "Laplace Demo"
 
     # [load]
 
@@ -42,11 +41,11 @@ def blurred_laplace(src):
 
     #plt.hist(abs_dst.ravel(),256,[0,256]); plt.yscale('log'); plt.show()
     # [convert]
-    print('a')
-    cv.imshow('window', abs_dst)
-    cv.waitKey(5000)
-    ret,abs_dst = cv.threshold(abs_dst, 15,255,cv.THRESH_TOZERO)
+
+    ret,abs_dst = cv.threshold(abs_dst, thresh,255,cv.THRESH_TOZERO)
     abs_dst_align = abs_dst
+
+    return abs_dst_align
 
     # [display]
     '''ind=0
@@ -63,43 +62,41 @@ def blurred_laplace(src):
 
     # [display]
     
-    #n = np.median(abs_dst[abs_dst>10])+np.std(abs_dst[abs_dst>10])
-    cv.imshow('window', abs_dst)
+def mask_blur(abs_dst, j=3):
+
+    if j==0:
+        blur_size = (3,3)
+    elif j%2==0:
+        blur_size = (j+1,j+1)
+    else:
+        blur_size = (j,j)
     
-    c = cv.waitKey(5000)
-
-    blur_size = (101,101)
-
-    for j in range(50):
-        if j==0:
-            blur_size = (3,3)
-        elif j%2==0:
-            blur_size = (j+1,j+1)
-        else:
-            blur_size = (j,j)
-        #blur_size = (101, 101)
-        abs_dst = cv.GaussianBlur(abs_dst, blur_size,0)
-        peak_new = np.max(abs_dst)
-        abs_dst = ( abs_dst ) / peak_new 
-        print(j,peak_new)
-        cv.imshow('window', abs_dst)
-        cv.waitKey(10)
+    abs_dst = cv.GaussianBlur(abs_dst, blur_size,0)
+    peak_new = np.max(abs_dst)
+    abs_dst = ( abs_dst ) / peak_new 
         
     
     
-    return abs_dst_align, abs_dst
+    return abs_dst
 
 imageName = '/Users/anthonyesposito/Pictures/macroni/Rosasite_w_Conacalcite/1/JPG/ExportDSCF69382022-42-50.jpg'
 
 img = cv.imread(imageName, cv.IMREAD_COLOR) # Load an Image
 
-laplace_align, blurred  = blurred_laplace(img)
+laplace_align  = laplace_threshold(img, thresh=15)
+blurred_align = mask_blur(laplace_align, j=1)
 
-print('d')
+for i in range(2,50):
+    blurred_align = mask_blur(blurred_align, i)
+
+print('a')
 cv.imshow('window', img)
 cv.waitKey(5000)
-print('e')
-cv.imshow('window', blurred)
+print('c')
+cv.imshow('window', laplace_align)
+cv.waitKey(5000)
+print('c')
+cv.imshow('window', blurred_align)
 cv.waitKey(5000)
 
 
