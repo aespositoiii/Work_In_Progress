@@ -4,7 +4,7 @@ import time
 
 # Read the images to be aligned
 im1 =  cv.imread("/Users/anthonyesposito/Pictures/macroni/Rosasite_w_Conacalcite/1/JPG/ExportDSCF69412022-43-07.jpg");
-im2 =  cv.imread("/Users/anthonyesposito/Pictures/macroni/Rosasite_w_Conacalcite/1/JPG/ExportDSCF69422022-43-14.jpg");
+im2 =  cv.imread("/Users/anthonyesposito/Pictures/macroni/Rosasite_w_Conacalcite/1/JPG/ExportDSCF69202022-40-59.jpg");
 
 # Convert images to grayscale
 im1_gray = cv.cvtColor(im1,cv.COLOR_BGR2GRAY)

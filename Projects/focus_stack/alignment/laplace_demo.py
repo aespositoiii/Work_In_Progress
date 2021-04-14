@@ -52,7 +52,7 @@ def main(argv):
     ret,abs_dst_disp = cv.threshold(abs_dst,np.median(abs_dst[abs_dst>10])+np.std(abs_dst[abs_dst>10]),255,cv.THRESH_TOZERO)
     
     abs_dst = cv.GaussianBlur(abs_dst, (9,9),0)
-    #plt.hist(abs_dst[abs_dst>0].ravel(),256,[0,256]); plt.show()
+    plt.hist(abs_dst[abs_dst>5].ravel(),256,[0,256]); plt.show()
     # [convert]
     print(abs_dst.max())
     print(abs_dst.min())
@@ -65,7 +65,7 @@ def main(argv):
     # [display]
     ind = 0
     
-    while True:
+    for i in range(256):
         ind = (ind + 1) % 256
         #n = np.median(abs_dst[abs_dst>10])+np.std(abs_dst[abs_dst>10])
         ret,abs_dst_disp = cv.threshold(abs_dst, ind,255,cv.THRESH_TOZERO)

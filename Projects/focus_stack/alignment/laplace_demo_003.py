@@ -16,7 +16,7 @@ def main(argv):
     # [variables]
 
     # [load]
-    imageName = argv[0] if len(argv) > 0 else '/Users/anthonyesposito/Pictures/macroni/Rosasite_w_Conacalcite/1/JPG/ExportDSCF69422022-43-14.jpg'
+    imageName = argv[0] if len(argv) > 0 else '/Users/anthonyesposito/Pictures/macroni/Rosasite_w_Conacalcite/1/JPG/ExportDSCF69362022-42-38.jpg'
 
     src = cv.imread(cv.samples.findFile(imageName), cv.IMREAD_COLOR) # Load an image
 
@@ -58,7 +58,7 @@ def main(argv):
     print(abs_dst.min())
     print(np.unique(abs_dst).shape)
 
-    abs_dst = (abs_dst/(np.median(abs_dst[abs_dst>0])-np.std(abs_dst[abs_dst>0])))**2
+    abs_dst = (abs_dst/(np.median(abs_dst[abs_dst>10])-np.std(abs_dst[abs_dst>10])))**2
     abs_dst = (abs_dst/abs_dst.max())*255
     abs_dst = abs_dst.astype('uint8')
 

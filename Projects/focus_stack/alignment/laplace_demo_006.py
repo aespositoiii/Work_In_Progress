@@ -8,17 +8,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import time
 
-def blurred_laplace(src, blur_size=(201,201)):
+def blurred_laplace(src, blur_size=(101,101)):
     # [variables]
     # Declare the variables we are going to use
     t1 = time.time()
     ddepth = cv.CV_16S
     kernel_size = 3
     window_name = "Laplace Demo"
-    # [variables]
-
-    # [load]
-    imageName = '/Users/anthonyesposito/Pictures/macroni/Rosasite_w_Conacalcite/1/JPG/ExportDSCF69422022-43-14.jpg'
 
     # [load]
 
@@ -44,37 +40,62 @@ def blurred_laplace(src, blur_size=(201,201)):
     # converting back to uint8
     abs_dst = cv.convertScaleAbs(dst)
 
+    #plt.hist(abs_dst.ravel(),256,[0,256]); plt.yscale('log'); plt.show()
     # [convert]
+    print('a')
     cv.imshow('window', abs_dst)
     cv.waitKey(5000)
-    abs_dst = (abs_dst/(np.percentile(abs_dst[abs_dst>10], 10)))**1.5
-    abs_dst = (abs_dst/abs_dst.max())*255
-    abs_dst = abs_dst.astype('uint8')
+    ret,abs_dst = cv.threshold(abs_dst, 20,255,cv.THRESH_TOZERO)
+    
 
     # [display]
-
-
+    '''ind=0
+    while True:
+        ind = (ind + 1) % 256
+        #n = np.median(abs_dst[abs_dst>10])+np.std(abs_dst[abs_dst>10])
+        ret,abs_dst_disp = cv.threshold(abs_dst, ind,255,cv.THRESH_TOZERO)
+        abs_dst_disp = abs_dst_disp**5
+        cv.imshow('window_name', abs_dst_disp)
+        print(ind)
+        c = cv.waitKey(1000)
+        if c == 27:
+            break'''
 
     # [display]
-    ind = 0
-
-    for i in range(15):
+    
+    #n = np.median(abs_dst[abs_dst>10])+np.std(abs_dst[abs_dst>10])
+    
+    
+    print('b')
+    cv.imshow('window', abs_dst)
+    
+    c = cv.waitKey(1000)
+    
+    for j in range(5):
+        peak = np.max(abs_dst)
         abs_dst = cv.GaussianBlur(abs_dst, blur_size,0)
-        abs_dst = (abs_dst/abs_dst.max())*255
-        abs_dst = abs_dst.astype('uint8')
-
+        peak_new = np.max(abs_dst)
+        abs_dst = peak * abs_dst / peak_new
+        
+        
+    print('c')
+    cv.imshow('window', abs_dst)
+    cv.waitKey(1000)
+    
     return abs_dst
 
-imageName = '/Users/anthonyesposito/Pictures/macroni/Rosasite_w_Conacalcite/1/JPG/ExportDSCF69362022-42-38.jpg'
+imageName = '/Users/anthonyesposito/Pictures/macroni/Rosasite_w_Conacalcite/1/JPG/ExportDSCF69402022-43-01.jpg'
 
 img = cv.imread(imageName, cv.IMREAD_COLOR) # Load an Image
 
 blurred  = blurred_laplace(img)
 
+print('d')
 cv.imshow('window', img)
-cv.waitKey(5000)
+cv.waitKey(1000)
+print('e')
 cv.imshow('window', blurred)
-cv.waitKey(5000)
+cv.waitKey(1000)
 
 
 
