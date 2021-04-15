@@ -1,4 +1,4 @@
-from stacking_funcs import get_images, laplace_threshold, mask_blur
+from stacking_funcs_002 import get_images, laplace_threshold, mask_blur
 import sys
 import cv2 as cv
 import matplotlib.pyplot as plt
@@ -46,13 +46,12 @@ for i in range(len(images)):
     cv.waitKey(1000)
 
 """
-i = 9
+i = 14
 
 img = images[i]
 laplace_align, max_blur  = laplace_threshold(img, thresh=20)
-blurred_align = mask_blur(laplace_align, j=101)
-for n in range(50):
-        blurred_align = mask_blur(blurred_align, n)
+blurred_align = mask_blur(laplace_align, max_blur, n_iter=50)
+
 print(i)
 print('a')
 cv.imshow('window', img)
