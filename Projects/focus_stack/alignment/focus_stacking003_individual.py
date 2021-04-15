@@ -46,7 +46,7 @@ for i in range(len(images)):
     cv.waitKey(1000)
 
 """
-i = 31
+i = 17
 
 img = images[i]
 laplace_align, max_blur  = laplace_threshold(img, thresh=20)

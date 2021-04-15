@@ -28,10 +28,11 @@ for i in range(len(images)):
     img = images[i]
     laplace_align, max_blur  = laplace_threshold(img, thresh=15)
     
+    print('image ',i)
     
-    blurred_laplace = mask_blur(laplace_align, j=1)
-    for n in range(50):
-        blurred_laplace = mask_blur(blurred_laplace, n)
+    for n in range(5):
+        blurred_laplace = mask_blur(laplace_align, 10*n)
+        print('image ', i, ' blur size ', n, ' max blur ',np.max(blurred_laplace))
     
     align[i] = align.append(laplace_align)
     print(i)

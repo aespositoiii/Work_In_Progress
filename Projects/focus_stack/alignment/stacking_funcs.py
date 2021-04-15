@@ -69,8 +69,8 @@ def mask_blur(abs_dst, j=3):
         blur_size = (j,j)
     
     abs_dst = cv.GaussianBlur(abs_dst, blur_size,0)
-    peak_new = np.max(abs_dst)
-    abs_dst = ( abs_dst ) / peak_new 
+    #peak_new = np.max(abs_dst)
+    #abs_dst = ( abs_dst ) / peak_new 
     
     return abs_dst
 """
