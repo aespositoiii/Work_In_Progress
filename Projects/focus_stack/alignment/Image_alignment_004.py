@@ -2,10 +2,8 @@ import cv2 as cv
 import numpy as np
 import time
 
-def registration(im1,im2, warp_mode=cv.MOTION_EUCLIDEAN, number_of_iterations=1000, termination_eps=1e-3)
+def registration(im1,im2, warp_mode=cv.MOTION_EUCLIDEAN, number_of_iterations=1000, termination_eps=1e-3):
     # Read the images to be aligned
-    im1 =  cv.imread("/Users/anthonyesposito/Pictures/macroni/Rosasite_w_Conacalcite/1/JPG/ExportDSCF69412022-43-07.jpg");
-    im2 =  cv.imread("/Users/anthonyesposito/Pictures/macroni/Rosasite_w_Conacalcite/1/JPG/ExportDSCF69422022-43-14.jpg");
 
     # Convert images to grayscale
     im1_gray = cv.cvtColor(im1,cv.COLOR_BGR2GRAY)
@@ -24,11 +22,11 @@ def registration(im1,im2, warp_mode=cv.MOTION_EUCLIDEAN, number_of_iterations=10
         warp_matrix = np.eye(2, 3, dtype=np.float32)
 
     # Specify the number of iterations.
-    number_of_iterations = 1000;
+    
 
     # Specify the threshold of the increment
     # in the correlation coefficient between two iterations
-    termination_eps = 1e-3;
+    
 
     # Define termination criteria
     criteria = (cv.TERM_CRITERIA_EPS | cv.TERM_CRITERIA_COUNT, number_of_iterations,  termination_eps)
@@ -47,18 +45,6 @@ def registration(im1,im2, warp_mode=cv.MOTION_EUCLIDEAN, number_of_iterations=10
 
     # Show final results
     ind = 0
-
-    '''for i in range(100):
-        ind = (ind+1) % 2
-
-        if ind == 0:
-            cv.imshow("Image", im1[1500:1600,1500:1600])
-            cv.waitKey(100)
-        else:
-            cv.imshow("Image", im2_aligned[1500:1600,1500:1600] )
-            cv.waitKey(100)'''
-    print(time.time() - t1)
-
     for i in range(100):
         ind = (ind+1) % 2
 
@@ -75,3 +61,5 @@ def registration(im1,im2, warp_mode=cv.MOTION_EUCLIDEAN, number_of_iterations=10
 
 im1 =  cv.imread("/Users/anthonyesposito/Pictures/macroni/Rosasite_w_Conacalcite/1/JPG/ExportDSCF69412022-43-07.jpg");
 im2 =  cv.imread("/Users/anthonyesposito/Pictures/macroni/Rosasite_w_Conacalcite/1/JPG/ExportDSCF69422022-43-14.jpg");
+
+registration(im1,im2, warp_mode=cv.MOTION_EUCLIDEAN, number_of_iterations=1000, termination_eps=1e-3)
