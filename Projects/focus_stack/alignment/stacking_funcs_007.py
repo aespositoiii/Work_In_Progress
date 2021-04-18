@@ -13,7 +13,6 @@ def get_images(directory):
     image1 = cv.imread(directory+b[0], cv.IMREAD_COLOR)
     
     images = np.zeros((len(b), image1.shape[0], image1.shape[1], image1.shape[2]), 'uint8')
-    align = np.zeros((len(b), image1.shape[0], image1.shape[1]), 'uint8')
     mask = np.zeros((len(b), image1.shape[0], image1.shape[1]), 'uint8')
 
     for i in range(0, len(b)):
@@ -65,7 +64,6 @@ def laplace_threshold(src, thresh=15):
     abs_dst_check = np.max(cv.GaussianBlur(abs_dst, (11,11),0))
 
     return abs_dst_align, abs_dst_check
-    
 def mask_blur(abs_dst, norm, n_iter=50):
 
     for i in range(3, ( 2 * n_iter), 2):
