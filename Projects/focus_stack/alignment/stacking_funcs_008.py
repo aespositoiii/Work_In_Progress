@@ -10,6 +10,14 @@ def get_images(directory):
     for root, dirs, files in a:
         b = files
     
+    file_nums = b.copy()
+
+    for i in range(len(b)):
+        a = filter(str.isdigit, b[i])
+        file_nums[i] = int(''.join(a))
+
+        print(type(file_nums[i]),file_nums[i])
+
     image1 = cv.imread(directory+b[0], cv.IMREAD_COLOR)
     
     images = np.zeros((len(b), image1.shape[0], image1.shape[1], image1.shape[2]), 'uint8')
@@ -23,7 +31,7 @@ def get_images(directory):
             hist, bin_edges = np.histogram(images[i,:,:,j], bins=np.arange(257))
             histograms[i,(j*256):(j*256+256)] = hist
     
-    return b, images, mask, histograms
+    return b, images, file_nums, mask, histograms
 
 def laplace_threshold(src, thresh=15):
     # [variables]

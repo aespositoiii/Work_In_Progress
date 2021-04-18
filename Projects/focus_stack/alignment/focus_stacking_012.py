@@ -1,4 +1,4 @@
-from stacking_funcs_007 import get_images, laplace_threshold, mask_blur, registration
+from stacking_funcs_008 import get_images, laplace_threshold, mask_blur, registration
 from sklearn.decomposition import PCA
 import sys
 import cv2 as cv
@@ -9,16 +9,23 @@ import time
 
 t0 = time.time()
 
-directory = '/Users/anthonyesposito/Pictures/macroni/Rosasite_w_Conacalcite/1/check/JPG/'
+directory = '/Users/anthonyesposito/Pictures/macroni/Rosasite_w_Conacalcite/2/JPG/'
 
-filenames, images, mask, histograms = get_images(directory)
+filenames, images, file_nums, mask, histograms = get_images(directory)
 
 print('Import:  ', time.time()-t0)
 
 pca = PCA(n_components=2)
 pca.fit(histograms)
 print(type(pca.components_), pca.components_.shape, pca.explained_variance_ratio_)
-1
+
+images_pca = pca.transform(histograms)
+plt.figure()
+plt.plot(file_nums, images_pca, 'o')
+plt.show(block=False)
+plt.pause(5)
+plt.close()
+
 
 
 t1 = time.time()
