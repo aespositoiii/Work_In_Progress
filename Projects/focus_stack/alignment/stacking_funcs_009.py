@@ -1,3 +1,4 @@
+from sklearn.decomposition import PCA
 import sys
 import cv2 as cv
 import matplotlib.pyplot as plt
@@ -31,8 +32,35 @@ def get_images(directory, hist_thresh):
         for j in range(images[i].shape[2]):
             hist, bin_edges = np.histogram(images[i,:,:,j], bins=np.arange(257))
             histograms[i,(j*hist_width):(j*hist_width+hist_width)] = hist[hist_thresh:256]
-    
+        
     return b, images, file_nums, mask, histograms
+
+def pca_processing(images, filenames, file_nums, histograms, n_comps, color_channels, hist_thresh):
+
+    images_pca = np.zeros((len(filenames), color_channels*n_comps))
+    pca = PCA(n_components=n_comps)
+
+    colors = ['b', 'g', 'r']
+    markers = ['.', 'x', '+']
+    plt.figure()
+
+    hist_width = 256-hist_thresh
+
+    for i in range(color_channels):
+        pca.fit(histograms[:,(i*hist_width):(i*hist_width+hist_width)])
+        pca_temp = pca.transform(histograms[:,(i*hist_width):(i*hist_width+hist_width)])
+        for j in range(n_comps):
+            pca_temp_ij = pca_temp[...,j]
+            pca_temp_ij_min = pca_temp_ij.min()
+            pca_temp_ij_max = pca_temp_ij.max()
+            images_pca[...,i*color_channels+j] = ( pca_temp_ij - pca_temp_ij_min ) / ( ( j + 1 ) * pca_temp_ij_max )
+            plt.plot(file_nums, images_pca[:,i*color_channels+j], markers[j], color=colors[i])
+
+    plt.show(block=False)
+    plt.pause(20)
+    plt.close()
+
+    return images_pca
 
 def laplace_threshold(src, thresh=15):
     # [variables]

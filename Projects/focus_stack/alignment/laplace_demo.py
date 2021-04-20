@@ -65,7 +65,7 @@ def main(argv):
     # [display]
     ind = 0
     
-    for i in range(256):
+    while True:
         ind = (ind + 1) % 256
         #n = np.median(abs_dst[abs_dst>10])+np.std(abs_dst[abs_dst>10])
         ret,abs_dst_disp = cv.threshold(abs_dst, ind,255,cv.THRESH_TOZERO)

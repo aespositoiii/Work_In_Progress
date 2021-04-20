@@ -9,24 +9,46 @@ import time
 
 t0 = time.time()
 
-directory = '/Users/anthonyesposito/Pictures/macroni/Rosasite_w_Conacalcite/4/JPG/'
+directory = '/Users/anthonyesposito/Pictures/macroni/Rosasite_w_Conacalcite/1/JPG/'
 
 filenames, images, file_nums, mask, histograms = get_images(directory)
 
 print('Import:  ', time.time()-t0)
 
-pca = PCA(n_components=2)
+n_comps = 2
+color_channels = images.shape[3]
+
+images_pca = np.zeros((len(filenames), images.shape, n_comps))
+pca = PCA(n_components=n_comps)
+
+for i in range(images[])
+    
+
+
 pca.fit(histograms)
-print(type(pca.components_), pca.components_.shape, pca.explained_variance_ratio_)
+#print(type(pca.components_), pca.components_.shape, pca.explained_variance_ratio_)
 
 images_pca = pca.transform(histograms)
+images_pca_first = images_pca[...,0]
+images_pca_second = images_pca[...,1]
+image_order = np.argsort(images_pca_first, axis=0)
+image_ordered = np.zeros(image_order.shape).astype('int64')
+
+
+print(images_pca_first.shape, images_pca_first.dtype, images_pca_first)
+print(images_pca_second.shape, images_pca_second.dtype, images_pca_second)
+
+for i in range(len(image_order)):
+    image_ordered[i] = list(image_order).index(i)
+    cv.imshow('window', images[image_ordered[i]])
+    cv.waitKey(1000)
+
 plt.figure()
-plt.plot(file_nums, images_pca, 'o')
+plt.plot(file_nums, images_pca_first, 'o')
+
 plt.show(block=False)
 plt.pause(5)
 plt.close()
-
-
 
 t1 = time.time()
 
