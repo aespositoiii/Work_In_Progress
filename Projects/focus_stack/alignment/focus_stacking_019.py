@@ -1,4 +1,4 @@
-from stacking_funcs_010 import import_describe, laplace_threshold, mask_blur, registration, image_sort
+from stacking_funcs_011 import import_describe, laplace_threshold, mask_blur, registration, image_sort
 from sklearn.decomposition import PCA
 import sys
 import cv2 as cv
@@ -17,7 +17,7 @@ filenames, images, file_nums, mask, histograms = import_describe(directory, hist
 
 print('Import:  ', time.time()-t0)
 
-image_corr_argsort, image_corr_maxmin = image_sort(images=images, filenames=filenames, file_nums=file_nums, histograms=histograms, n_comps=2, color_channels=images.shape[3], hist_thresh=hist_thresh)
+image_corr_argsort, image_corr_maxmin = image_sort(images=images, filenames=filenames, file_nums=file_nums, histograms=histograms, n_comps=3, color_channels=images.shape[3], hist_thresh=hist_thresh)
 
 print(image_corr_maxmin)
 print(image_corr_argsort)

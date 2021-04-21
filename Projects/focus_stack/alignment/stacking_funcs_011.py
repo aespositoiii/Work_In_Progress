@@ -53,7 +53,7 @@ def image_sort(images, filenames, file_nums, histograms, n_comps, color_channels
             pca_temp_ij = pca_temp[...,j]
             pca_temp_ij_min = pca_temp_ij.min()
             pca_temp_ij_max = pca_temp_ij.max()
-            images_pca[...,j*color_channels+i] = (( j + 1 ) * ( pca_temp_ij - pca_temp_ij_min )) / ( pca_temp_ij_max )
+            images_pca[...,j*color_channels+i] = ( pca_temp_ij - pca_temp_ij_min ) / ( ( j + 1 ) *  pca_temp_ij_max )
             plt.plot(file_nums, images_pca[:,j*color_channels+i], markers[j], color=colors[i])
         plt.show(block=False)
         plt.pause(5)
@@ -61,11 +61,11 @@ def image_sort(images, filenames, file_nums, histograms, n_comps, color_channels
     image_corr = np.corrcoef(images_pca)
     print(np.argmax(np.sum(image_corr, axis=0)))
     image_corr_argsort = np.argsort(image_corr, axis=1)
-    image_corr_maxmin = np.zeros(image_corr_argsort.shape)
+    image_corr_maxmin = np.zeros(image_corr_argsort.shape, dtype='uint8')
     for i in range(image_corr_maxmin.shape[0]):
         for j in range(image_corr_maxmin.shape[1]):
             image_corr_maxmin[i,j] = list(image_corr_argsort[i]).index(j)
-            print(i, '  ', file_nums[i], '  ', j, '  ', file_nums[int(image_corr_maxmin[i,j])])
+            print(i, '  ', file_nums[i], '  ', j, '  ',image_corr_maxmin[i,j], '  ', file_nums[j])
     print(image_corr_argsort)
     print(image_corr_maxmin)
 
