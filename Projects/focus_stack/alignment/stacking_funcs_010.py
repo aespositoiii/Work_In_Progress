@@ -6,7 +6,7 @@ import numpy as np
 import os
 import time
 
-def get_images(directory, hist_thresh):
+def import_describe(directory, hist_thresh):
     a = os.walk(directory)
     for root, dirs, files in a:
         b = files
@@ -17,7 +17,7 @@ def get_images(directory, hist_thresh):
         a = filter(str.isdigit, b[i])
         file_nums[i] = int(''.join(a))
 
-        print(type(file_nums[i]),file_nums[i])
+        print(i,file_nums[i])
 
     image1 = cv.imread(directory+b[0], cv.IMREAD_COLOR)
     
@@ -35,7 +35,7 @@ def get_images(directory, hist_thresh):
         
     return b, images, file_nums, mask, histograms
 
-def pca_processing(images, filenames, file_nums, histograms, n_comps, color_channels, hist_thresh):
+def image_sort(images, filenames, file_nums, histograms, n_comps, color_channels, hist_thresh):
 
     images_pca = np.zeros((len(filenames), color_channels*n_comps))
     pca = PCA(n_components=n_comps)
@@ -44,22 +44,32 @@ def pca_processing(images, filenames, file_nums, histograms, n_comps, color_chan
     markers = ['.', 'x', '+']
 
     hist_width = 256-hist_thresh
-    plt.figure()
+
     for i in range(color_channels):
+        plt.figure(num=(colors[i]))
         pca.fit(histograms[:,(i*hist_width):(i*hist_width+hist_width)])
         pca_temp = pca.transform(histograms[:,(i*hist_width):(i*hist_width+hist_width)])
         for j in range(n_comps):
             pca_temp_ij = pca_temp[...,j]
             pca_temp_ij_min = pca_temp_ij.min()
             pca_temp_ij_max = pca_temp_ij.max()
-            images_pca[...,i*color_channels+j] = ( pca_temp_ij - pca_temp_ij_min ) / ( ( j + 1 ) * pca_temp_ij_max )
+            images_pca[...,i*color_channels+j] = (( j + 1 ) * ( pca_temp_ij - pca_temp_ij_min )) / ( pca_temp_ij_max )
             plt.plot(file_nums, images_pca[:,i*color_channels+j], markers[j], color=colors[i])
+        plt.show(block=False)
+        plt.pause(5)
 
-    plt.show(block=False)
-    plt.pause(20)
-    plt.close()
+    image_corr = np.corrcoef(images_pca)
+    print(np.argmax(np.sum(image_corr, axis=0)))
+    image_corr_argsort = np.argsort(image_corr, axis=1)
+    image_corr_maxmin = np.zeros(image_corr_argsort.shape)
+    for i in range(image_corr_maxmin.shape[0]):
+        for j in range(image_corr_maxmin.shape[1]):
+            image_corr_maxmin[i,j] = list(image_corr_argsort[i]).index(j)
+        
+    print(image_corr_argsort)
+    print(image_corr_maxmin)
 
-    return images_pca
+    return image_corr_argsort, image_corr_maxmin
 
 def laplace_threshold(src, thresh=15):
     # [variables]
