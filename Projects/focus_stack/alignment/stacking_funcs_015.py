@@ -35,6 +35,9 @@ def import_describe(directory, hist_thresh):
         
     return b, images, file_nums, mask, histograms
 
+
+
+
 def image_sort(images, filenames, file_nums, histograms, n_comps, color_channels, hist_thresh):
 
     images_pca = np.zeros((len(filenames), color_channels*n_comps))
@@ -94,10 +97,10 @@ def image_sort(images, filenames, file_nums, histograms, n_comps, color_channels
 
     return order
 
+
+
+
 def laplace_threshold(src, thresh, norm_blur):
-    
-    
-    
     
     t1 = time.time()
     ddepth = cv.CV_16S
@@ -133,9 +136,12 @@ def laplace_threshold(src, thresh, norm_blur):
     ret,abs_dst = cv.threshold(abs_dst, thresh,255,cv.THRESH_TOZERO)
     abs_dst_align = abs_dst
 
-    abs_dst_check = np.max(cv.GaussianBlur(abs_dst, (11,11),0))
+    abs_dst_check = np.max(cv.GaussianBlur(abs_dst, (norm_blur,norm_blur),0))
 
     return abs_dst_align, abs_dst_check
+
+
+
 
 def mask_blur(img, thresh=15, norm_blur=11, n_iter=50):
 
@@ -148,13 +154,20 @@ def mask_blur(img, thresh=15, norm_blur=11, n_iter=50):
         
     return abs_dst
 
+
+
+
 def registration(im1,im2, warp_mode=cv.MOTION_EUCLIDEAN, number_of_iterations=1000, termination_eps=1e-3):
+    
     # Read the images to be aligned
-
+    
     # Convert images to grayscale
-    im1_gray = cv.cvtColor(im1,cv.COLOR_BGR2GRAY)
-    im2_gray = cv.cvtColor(im2,cv.COLOR_BGR2GRAY)
-
+    if len(im1.shape) == 3:
+        im1_gray = cv.cvtColor(im1,cv.COLOR_BGR2GRAY)
+        im2_gray = cv.cvtColor(im2,cv.COLOR_BGR2GRAY)
+    else:
+        im1_gray = np.copy(im1)
+        im2_gray = np.copy(im2)
     # Find size of image1
     sz = im1.shape
 
@@ -182,6 +195,15 @@ def registration(im1,im2, warp_mode=cv.MOTION_EUCLIDEAN, number_of_iterations=10
     # Run the ECC algorithm. The results are stored in warp_matrix.
     cc, warp_matrix = cv.findTransformECC(im1_gray,im2_gray,warp_matrix, warp_mode, criteria, None, 1)
 
+    return warp_matrix
+
+
+
+
+def img_warp(im2, warp_matrix, warp_mode):
+
+    sz = im2.shape
+
     if warp_mode == cv.MOTION_HOMOGRAPHY :
         # Use warpPerspective for Homography 
         im2_aligned = cv.warpPerspective (im2, warp_matrix, (sz[1],sz[0]), flags=cv.INTER_LINEAR + cv.WARP_INVERSE_MAP)
@@ -189,16 +211,19 @@ def registration(im1,im2, warp_mode=cv.MOTION_EUCLIDEAN, number_of_iterations=10
         # Use warpAffine for Translation, Euclidean and Affine
         im2_aligned = cv.warpAffine(im2, warp_matrix, (sz[1],sz[0]), flags=cv.INTER_LINEAR + cv.WARP_INVERSE_MAP);
 
-    # Show final results
-    ind = 0
-    for i in range(100):
-        ind = (ind+1) % 2
+    return im2_aligned
 
-        if ind == 0:
-            cv.imshow("Image", im1)
-            cv.waitKey(10)
-        else:
-            cv.imshow("Image", im2_aligned)
-            cv.waitKey(10)
+#def combine(im1, im2, im1_mask, im2_mask):
 
-    difference = im1-im2_aligned
+def reg_comb(images, order, thresh, norm_blur, n_iter, warp_mode=cv.MOTION_EUCLIDEAN, number_of_iterations=1000, termination_eps=1e-3):
+
+    comb = image(order[0])
+    comb_mask = mask_blur(comb, thresh, norm_blur, n_iter)
+
+    for i in order[1:]:
+        
+        img = images[i]
+        warp_matrix = registration(comb, img, warp_mode, number_of_iterations, termination_eps)
+
+        img_warped = img_warp(img, warp_matrix, warp_mode)
+        mask_warped = img_warp(img, warp_matrix, warp_mode)
