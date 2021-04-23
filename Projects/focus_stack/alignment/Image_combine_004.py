@@ -5,6 +5,8 @@ import time
 
 t0 = time.time()
 
+directory = "/Users/anthonyesposito/Pictures/macroni/Rosasite_w_Conacalcite/1/JPG/"
+
 im1 =  cv.imread("/Users/anthonyesposito/Pictures/macroni/Rosasite_w_Conacalcite/1/JPG/DSCF6941.jpg")
 im2 =  cv.imread("/Users/anthonyesposito/Pictures/macroni/Rosasite_w_Conacalcite/1/JPG/DSCF6942.jpg")
 
@@ -37,7 +39,9 @@ comb = im1_masked+im2_masked
 
 print(time.time()-t0)
 
-for i in range(30):
+print(im1.dtype, im2.dtype, comb.dtype)
+
+for i in range(50):
     if ind==0:
         cv.imshow('window', im1)
         cv.waitKey(1)
@@ -50,3 +54,5 @@ for i in range(30):
 
 cv.imshow('window', comb)
 cv.waitKey(1000)
+
+cv.imwrite((directory + 'test' + '.jpg'), comb)

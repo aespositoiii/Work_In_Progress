@@ -5,21 +5,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import time
+import glob
 
 def import_describe(directory, hist_thresh):
-    a = os.walk(directory)
-    for root, dirs, files in a:
-        b = files
-    
+    b = glob.glob(directory+ '*.jpg')
     file_nums = b.copy()
 
     for i in range(len(b)):
         a = filter(str.isdigit, b[i])
         file_nums[i] = int(''.join(a))
 
-        print(i,file_nums[i])
-
-    image1 = cv.imread(directory+b[0], cv.IMREAD_COLOR)
+    image1 = cv.imread(b[0], cv.IMREAD_COLOR)
     
     images = np.zeros((len(b), image1.shape[0], image1.shape[1], image1.shape[2]), 'uint8')
     mask = np.zeros((len(b), image1.shape[0], image1.shape[1]), 'uint8')
@@ -27,7 +23,7 @@ def import_describe(directory, hist_thresh):
     histograms = np.zeros((len(b), (hist_width)*3))
 
     for i in range(0, len(b)):
-        images[i] = cv.imread(directory+b[i], cv.IMREAD_COLOR)
+        images[i] = cv.imread(b[i], cv.IMREAD_COLOR)
         
         for j in range(images[i].shape[2]):
             hist, bin_edges = np.histogram(images[i,:,:,j], bins=np.arange(257))
@@ -147,7 +143,7 @@ def mask_blur(img, thresh=15, norm_blur=11, n_iter=50):
 
     abs_dst, norm  = laplace_threshold(img, thresh, norm_blur)
     
-    for i in range(3, ( 4 * n_iter), 2):
+    for i in range(3, ( 2 * n_iter), 2):
 
         abs_dst = cv.GaussianBlur(abs_dst, (i,i), 0)
         abs_dst = cv.normalize(abs_dst, abs_dst, 0, norm, cv.NORM_MINMAX)
@@ -218,11 +214,10 @@ def img_warp(im2, warp_matrix, warp_mode):
 def reg_comb(images, order, thresh=15, norm_blur=11, n_iter=50, exp=2, warp_mode=cv.MOTION_EUCLIDEAN, number_of_iterations=1000, termination_eps=1e-3):
 
     comb = images[order[0]]
-    
+    comb_grad = mask_blur(comb, thresh, norm_blur, n_iter)+1  
 
     for i in order[1:]:
-        
-        comb_grad = mask_blur(comb, thresh, norm_blur, n_iter)+1    
+        t1 = time.time()
 
         img = images[i]
         img_grad = mask_blur(img=img, thresh=thresh, n_iter=n_iter)
@@ -243,7 +238,13 @@ def reg_comb(images, order, thresh=15, norm_blur=11, n_iter=50, exp=2, warp_mode
         for i in range(comb.shape[2]):
             comb_temp[:,:,i] = comb[:,:,i] * comb_mask + img_warped[:,:,i] * img_mask_warped
 
+        comb_grad = np.maximum(comb_grad, img_grad_warped)
+
         comb = np.copy(comb_temp)
+
+        print(time.time()-t1)
 
         cv.imshow('window', comb)
         cv.waitKey(1)
+
+    return comb
