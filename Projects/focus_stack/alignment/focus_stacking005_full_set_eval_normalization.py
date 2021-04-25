@@ -7,7 +7,7 @@ import os
 import time
 
 directory = '/Users/anthonyesposito/Pictures/macroni/Rosasite_w_Conacalcite/1/JPG/'
-
+1
 images = get_images(directory)
 
 align = []
@@ -18,8 +18,8 @@ for i in range(len(images)):
     print(type(img), img.shape)
     cv.imshow('window', img)
     cv.waitKey(1000)
-    laplace_align, max_blur  = laplace_threshold(img, thresh=15)
-    blurred_laplace= mask_blur(laplace_align, max_blur, n_iter=50)
+    laplace_align, max_blur  = laplace_threshold(img, thresh=30)
+    blurred_laplace= mask_blur(laplace_align , 0, 255, n_iter=50)
     
     align[i] = align.append(laplace_align)
     mask[i] = mask.append(blurred_laplace)

@@ -4,12 +4,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import time
-import glob
 
 def get_images(directory):
     b = glob.glob(directory+ '*.jpg')
     
-    image1 = cv.imread(b[0], cv.IMREAD_COLOR)
+    image1 = cv.imread(directory+b[0], cv.IMREAD_COLOR)
     
     images = np.zeros((len(b), image1.shape[0], image1.shape[1], image1.shape[2]), 'uint8')
 

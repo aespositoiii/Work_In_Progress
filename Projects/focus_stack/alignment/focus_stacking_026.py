@@ -1,4 +1,4 @@
-from stacking_funcs_016_0 import import_describe, laplace_threshold, mask_blur, registration, image_sort, reg_comb
+from stacking_funcs_018 import import_describe, laplace_threshold, mask_blur, registration, image_sort, reg_comb
 from sklearn.decomposition import PCA
 import sys
 import cv2 as cv
