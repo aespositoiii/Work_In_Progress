@@ -176,7 +176,7 @@ def mask_blur(img, thresh=15, norm_blur=11, n_iter=50):
         abs_dst = cv.GaussianBlur(abs_dst, (i,i), 0)
         abs_dst = cv.normalize(abs_dst, abs_dst, 0, norm, cv.NORM_MINMAX)
         
-    return abs_dst
+    return abs_dst, norm
 
 
 
@@ -237,40 +237,33 @@ def img_warp(im2, warp_matrix, warp_mode):
 
     return im2_aligned
 
-#def combine(im1, im2, im1_mask, im2_mask):
 
+def reg_comb(images, order, trans_on, file_nums, thresh=15, norm_blur=11, n_iter=50, exp=2, warp_mode=cv.MOTION_EUCLIDEAN, number_of_iterations=1000, termination_eps=1e-3):
 
-
-def warp(images, order, trans_on, thresh, norm_blur):
-
-    bin_mask = np.ones(images.shape[[0,1,2]], dtype='uint8')
+    bin_mask = np.ones(images.shape[0:3], dtype='uint8')*255
     lap_mask = np.zeros(bin_mask.shape, dtype='uint8')
-    norm = np.zeros(len(order))
+    norm = np.zeros(len(order), dtype='uint8')
     
-    lap_mask[order[0]] = laplace_threshold(images[order[0]], thresh, norm_blur)
+    for i in range(len(order)):
+        t1 = time.time()
+        lap_mask[order[i]], norm[order[i]] = mask_blur(img=images[order[i]], thresh=thresh, n_iter=n_iter)
+        if i != 0:
+            warp_matrix = registration(images[order[trans_on[i]]], images[order[i]], warp_mode, number_of_iterations, termination_eps)
+            images[order[i]] = img_warp(images[order[i]], warp_matrix, warp_mode)
+            lap_mask[order[i]] = img_warp(lap_mask[order[i]], warp_matrix, warp_mode)
+            bin_mask[order[i]] = img_warp(bin_mask[order[i]], warp_matrix, warp_mode)
+            print(i, '  ', file_nums[order[i]], '  ', file_nums[order[trans_on[i]]], '  ', time.time()-t1, 'sec')
+        
+        cv.imshow('window', images[order[i]])
+        cv.waitKey(500)
+        cv.imshow('window', lap_mask[order[i]])
+        cv.waitKey(500)
+        cv.imshow('window', bin_mask[order[i]])
+        cv.waitKey(500)
 
-    comb = images[order[0]]
-    comb_mask = lap_mask
+    comb=0
 
-
-
-
-def reg_comb(images, order, thresh=15, norm_blur=11, n_iter=50, exp=2, warp_mode=cv.MOTION_EUCLIDEAN, number_of_iterations=1000, termination_eps=1e-3):
-
-    bin_mask = np.ones(images.shape[[0,1,2]], dtype='uint8')
-    lap_mask = np.zeros(bin_mask.shape, dtype='uint8')
-    norm = np.zeros(len(order))
-    
-    lap_mask[order[0]] = laplace_threshold(images[order[0]], thresh, norm_blur)
-
-    comb = images[order[0]]
-    comb_mask = lap_mask
-
-    comb = images[order[0]]
-    comb_grad = mask_blur(comb, thresh, norm_blur, n_iter)  
-
-
-    
+    comb
     '''for i in order[1:]:
         t1 = time.time()
 
