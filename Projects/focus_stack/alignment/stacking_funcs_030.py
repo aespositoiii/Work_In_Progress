@@ -36,14 +36,12 @@ def import_describe(directory, hist_thresh):
     histograms = np.zeros((len(b), (hist_width)*3))
 
     for i in range(0, len(b)):
-        t1 = time.time()
         images[i] = cv.imread(b[i], cv.IMREAD_COLOR)
         #cv.imshow('window', images[i])
         #cv.waitKey(500)
         for j in range(images[i].shape[2]):
             hist, bin_edges = np.histogram(images[i,:,:,j], bins=np.arange(257))
             histograms[i,(j*hist_width):(j*hist_width+hist_width)] = hist[hist_thresh:256]
-        print(i, '  ', time.time()-t1)
         
     return b, images, file_nums, mask, histograms
 
@@ -136,7 +134,7 @@ def laplace_threshold(src, thresh, norm_blur):
 
     # [reduce_noise]
     # Remove noise by blurring with a Gaussian filter
-    src = cv.GaussianBlur(src, (9, 9), 0)
+    src = cv.GaussianBlur(src, (3, 3), 0)
     # [reduce_noise]
 
     # [convert_to_gray]
@@ -178,7 +176,7 @@ def mask_blur(img, thresh=15, norm_blur=11, n_iter=50):
         abs_dst = cv.GaussianBlur(abs_dst, (i,i), 0)
         abs_dst = cv.normalize(abs_dst, abs_dst, 0, norm, cv.NORM_MINMAX)
         
-    return abs_dst, norm
+    return abs_dst
 
 
 
@@ -239,46 +237,14 @@ def img_warp(im2, warp_matrix, warp_mode):
 
     return im2_aligned
 
+#def combine(im1, im2, im1_mask, im2_mask):
 
-def reg_comb(images, order, trans_on, file_nums, thresh=15, norm_blur=11, n_iter=50, exp=2, warp_mode=cv.MOTION_EUCLIDEAN, number_of_iterations=1000, termination_eps=1e-3):
+def reg_comb(images, order, thresh=15, norm_blur=11, n_iter=50, exp=2, warp_mode=cv.MOTION_EUCLIDEAN, number_of_iterations=1000, termination_eps=1e-3):
 
-    #bin_mask = np.ones(images.shape[0:3], dtype='uint8')
-    lap_mask = np.zeros(images.shape[0:3], dtype='uint8')
-    norm = np.zeros(len(order), dtype='uint8')
-    
-    for i in range(len(order)):
-        t1 = time.time()
-        lap_mask[order[i]], norm[order[i]] = mask_blur(img=images[order[i]], thresh=thresh, n_iter=n_iter)
-        if i != 0:
-            warp_matrix = registration(images[order[trans_on[i]]], images[order[i]], warp_mode, number_of_iterations, termination_eps)
-            images[order[i]] = img_warp(images[order[i]], warp_matrix, warp_mode)
-            lap_mask[order[i]] = img_warp(lap_mask[order[i]], warp_matrix, warp_mode)
-            #bin_mask[order[i]] = img_warp(bin_mask[order[i]], warp_matrix, warp_mode)
-            print(i, '  ', file_nums[order[i]], '  ', file_nums[order[trans_on[i]]], '  ', time.time()-t1, 'sec')
+    comb = images[order[0]]
+    comb_grad = mask_blur(comb, thresh, norm_blur, n_iter)  
 
-    comb = np.zeros(images[0].shape, dtype='uint8')
-    comb_mask = np.zeros(lap_mask[0].shape, dtype='uint8')
-    diff_mask = np.zeros(lap_mask[0].shape, dtype='uint8')
-    temp_maks = np.zeros(lap_mask[0].shape, dtype='uint8')
-
-    for i in range(lap_mask.max()-10, 0, -10):
-        for j in range(len(order)):
-            t1 = time.time()
-            img = np.copy(images[order[j]])
-            ret, temp_mask = cv.threshold(lap_mask[order[j]], i, 1,cv.THRESH_BINARY)
-            diff_mask = cv.bitwise_and(temp_mask, comb_mask, diff_mask, mask = np.ones(comb_mask.shape, dtype='uint8'))
-            temp_mask = temp_mask - diff_mask
-            for k in range(comb.shape[2]):
-                img[:,:,k][temp_mask==0] = 0
-                comb[:,:,k] = comb[:,:,k] + img[:,:,k]
-            comb_mask = comb_mask + temp_mask
-            print(i, '  ', j, '  ', time.time()-t1)
-            cv.imshow('mask', comb_mask*255)
-            cv.waitKey(1)
-            cv.imshow('comb', comb)
-            cv.waitKey(1)
-
-    '''for i in order[1:]:
+    for i in order[1:]:
         t1 = time.time()
 
         img = images[i]
@@ -307,6 +273,6 @@ def reg_comb(images, order, trans_on, file_nums, thresh=15, norm_blur=11, n_iter
         print(time.time()-t1)
 
         cv.imshow('window', comb)
-        cv.waitKey(1)'''
+        cv.waitKey(1)
 
     return comb

@@ -1,4 +1,4 @@
-from stacking_funcs_016_0 import import_describe, laplace_threshold, mask_blur, registration, image_sort, reg_comb
+from stacking_funcs_030d import import_describe, laplace_threshold, mask_blur, registration, image_sort, reg_comb
 from sklearn.decomposition import PCA
 import sys
 import cv2 as cv
@@ -8,8 +8,7 @@ import os
 import time
 
 t0 = time.time()
-
-directory = '/Users/anthonyesposito/Pictures/macroni/Rosasite_w_Conacalcite/1/JPG/'
+directory = '/Users/anthonyesposito/Pictures/macroni/5-30-2019/JPEG/'
 hist_thresh = 10
 
 
@@ -23,6 +22,6 @@ order, trans_on = image_sort(images=images, filenames=filenames, file_nums=file_
 t2 = time.time()
 print('Sort: ', t2-t1, '  Total: ', t2-t0)
 
-comb = reg_comb(images, order, thresh=25, norm_blur=11, n_iter=50, exp=3, warp_mode=cv.MOTION_EUCLIDEAN, number_of_iterations=1000, termination_eps=1e-3)
+comb = reg_comb(images, order, trans_on, file_nums, thresh=15, norm_blur=11, n_iter=50, exp=3, warp_mode=cv.MOTION_EUCLIDEAN, number_of_iterations=1000, termination_eps=1e-3)
 
-cv.imwrite((directory + 'test' + '.jpg'), comb)
+cv.imwrite((directory + 'stacked/' + 'test' + str(int(time.time())) + '.jpg'), comb)

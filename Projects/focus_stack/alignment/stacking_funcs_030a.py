@@ -241,7 +241,7 @@ def img_warp(im2, warp_matrix, warp_mode):
 
 
 def reg_comb(images, order, trans_on, file_nums, thresh=15, norm_blur=11, n_iter=50, exp=2, warp_mode=cv.MOTION_EUCLIDEAN, number_of_iterations=1000, termination_eps=1e-3):
-
+    t0 = time.time()
     #bin_mask = np.ones(images.shape[0:3], dtype='uint8')
     lap_mask = np.zeros(images.shape[0:3], dtype='uint8')
     norm = np.zeros(len(order), dtype='uint8')
@@ -254,10 +254,50 @@ def reg_comb(images, order, trans_on, file_nums, thresh=15, norm_blur=11, n_iter
             images[order[i]] = img_warp(images[order[i]], warp_matrix, warp_mode)
             lap_mask[order[i]] = img_warp(lap_mask[order[i]], warp_matrix, warp_mode)
             #bin_mask[order[i]] = img_warp(bin_mask[order[i]], warp_matrix, warp_mode)
-            print(i, '  ', file_nums[order[i]], '  ', file_nums[order[trans_on[i]]], '  ', time.time()-t1, 'sec')
+            print(i, '  ', file_nums[order[i]], '  ', file_nums[order[trans_on[i]]], '  ', time.time()-t1, 'sec   ', time.time()-t0, 'sec')
+
+    t2 = time.time()
+    lap_mask_float = np.zeros(lap_mask.shape)
+    lap_mask_float = np.float_power(lap_mask, exp)
+    lap_mask_sum = lap_mask_float.sum(axis=0)
+
+    lap_mask_norm = np.zeros(lap_mask_float.shape)
 
     comb = np.zeros(images[0].shape, dtype='uint8')
-    comb_mask = np.zeros(lap_mask[0].shape, dtype='uint8')
+    t3 = time.time()
+    print(t3-t2, '   ', t3-t0)
+
+    for i in range(lap_mask.shape[0]):
+        t4 = time.time()
+        lap_mask_norm[i] = lap_mask_float[i] / lap_mask_sum
+        t5 = time.time()
+        print(i, '  ', t5-t4, '   ', t5-t0)
+
+    for i in range(lap_mask_norm.shape[0]):
+        cv.imshow('window', lap_mask_norm[i])
+        cv.waitKey(1000)
+
+    for i in range(images.shape[3]):
+        print('product ', (images[:,:,:,i] * lap_mask_norm).shape)
+        print('sum no axis ', (images[:,:,:,i] * lap_mask_norm).sum().shape)
+        print('sum axis 0 ',(images[:,:,:,i] * lap_mask_norm).sum(axis=0).shape)
+        print('sum axis 1 ', (images[:,:,:,i] * lap_mask_norm).sum(axis=1).shape)
+        print('sum axis 2 ', (images[:,:,:,i] * lap_mask_norm).sum(axis=2).shape)
+        
+
+    for i in range(images.shape[3]):
+        t6 = time.time()
+        comb[:,:,i] = (images[:,:,:,i] * lap_mask_norm).sum(axis=0)
+        t7 = time.time()
+        print(i, '   ', t7-t6, '   ', t7-t0)
+    
+    cv.imshow('window', comb)
+    cv.waitKey(5000)
+
+
+
+    '''comb = np.zeros(images[0].shape, dtype='uint8')
+    comb_mask = np.zeros(lap_mask[0].shape, dtype='uint8') 
     diff_mask = np.zeros(lap_mask[0].shape, dtype='uint8')
     temp_maks = np.zeros(lap_mask[0].shape, dtype='uint8')
 
@@ -276,7 +316,7 @@ def reg_comb(images, order, trans_on, file_nums, thresh=15, norm_blur=11, n_iter
             cv.imshow('mask', comb_mask*255)
             cv.waitKey(1)
             cv.imshow('comb', comb)
-            cv.waitKey(1)
+            cv.waitKey(1)'''
 
     '''for i in order[1:]:
         t1 = time.time()

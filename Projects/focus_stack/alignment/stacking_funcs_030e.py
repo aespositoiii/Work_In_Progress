@@ -7,8 +7,8 @@ import os
 import time
 import glob
 
-def import_describe(directory, hist_thresh):
-    b = glob.glob(directory+ '*.jpg')
+def import_describe(directory, ext, hist_min=0, hist_max=255):
+    b = glob.glob(directory + '*' + ext)
     file_nums = np.zeros(len(b))
 
     for i in range(len(b)):
@@ -32,7 +32,7 @@ def import_describe(directory, hist_thresh):
     
     images = np.zeros((len(b), image1.shape[0], image1.shape[1], image1.shape[2]), 'uint8')
     mask = np.zeros((len(b), image1.shape[0], image1.shape[1]), 'uint8')
-    hist_width = 256-hist_thresh
+    hist_width = hist_max - hist_min
     histograms = np.zeros((len(b), (hist_width)*3))
 
     for i in range(0, len(b)):
@@ -42,7 +42,7 @@ def import_describe(directory, hist_thresh):
         #cv.waitKey(500)
         for j in range(images[i].shape[2]):
             hist, bin_edges = np.histogram(images[i,:,:,j], bins=np.arange(257))
-            histograms[i,(j*hist_width):(j*hist_width+hist_width)] = hist[hist_thresh:256]
+            histograms[i,(j*hist_width):(j*hist_width+hist_width)] = hist[hist_min:hist_max]
         print(i, '  ', time.time()-t1)
         
     return b, images, file_nums, mask, histograms
@@ -50,7 +50,7 @@ def import_describe(directory, hist_thresh):
 
 
 
-def image_sort(images, filenames, file_nums, histograms, n_comps, color_channels, hist_thresh):
+def image_sort(images, filenames, file_nums, histograms, n_comps, color_channels, hist_min=0, hist_max=256):
 
     images_pca = np.zeros((len(filenames), color_channels*n_comps))
     pca = PCA(n_components=n_comps)
@@ -58,7 +58,7 @@ def image_sort(images, filenames, file_nums, histograms, n_comps, color_channels
     colors = ['b', 'g', 'r']
     markers = ['.', 'x', '+']
 
-    hist_width = 256-hist_thresh
+    hist_width = hist_max - hist_min
 
     for i in range(color_channels):
         plt.figure(num=(colors[i]))
@@ -136,7 +136,7 @@ def laplace_threshold(src, thresh, norm_blur):
 
     # [reduce_noise]
     # Remove noise by blurring with a Gaussian filter
-    src = cv.GaussianBlur(src, (9, 9), 0)
+    src = cv.GaussianBlur(src, (3, 3), 0)
     # [reduce_noise]
 
     # [convert_to_gray]
@@ -241,7 +241,7 @@ def img_warp(im2, warp_matrix, warp_mode):
 
 
 def reg_comb(images, order, trans_on, file_nums, thresh=15, norm_blur=11, n_iter=50, exp=2, warp_mode=cv.MOTION_EUCLIDEAN, number_of_iterations=1000, termination_eps=1e-3):
-
+    t0 = time.time()
     #bin_mask = np.ones(images.shape[0:3], dtype='uint8')
     lap_mask = np.zeros(images.shape[0:3], dtype='uint8')
     norm = np.zeros(len(order), dtype='uint8')
@@ -253,11 +253,79 @@ def reg_comb(images, order, trans_on, file_nums, thresh=15, norm_blur=11, n_iter
             warp_matrix = registration(images[order[trans_on[i]]], images[order[i]], warp_mode, number_of_iterations, termination_eps)
             images[order[i]] = img_warp(images[order[i]], warp_matrix, warp_mode)
             lap_mask[order[i]] = img_warp(lap_mask[order[i]], warp_matrix, warp_mode)
-            #bin_mask[order[i]] = img_warp(bin_mask[order[i]], warp_matrix, warp_mode)
-            print(i, '  ', file_nums[order[i]], '  ', file_nums[order[trans_on[i]]], '  ', time.time()-t1, 'sec')
+            print(i, '  ', file_nums[order[i]], '  ', file_nums[order[trans_on[i]]], '  ', time.time()-t1, 'sec   ', time.time()-t0, 'sec')
+
+    t2 = time.time()
+
+
+    lap_mask_float = np.zeros(lap_mask.shape)
+    lap_mask_float = np.float_power(lap_mask, exp)
+    lap_mask_sum = lap_mask_float.sum(axis=0)
 
     comb = np.zeros(images[0].shape, dtype='uint8')
-    comb_mask = np.zeros(lap_mask[0].shape, dtype='uint8')
+    comb_mask = np.zeros(lap_mask_float.shape)
+
+    lap_mask_norm = np.zeros(lap_mask_float.shape)
+
+    
+    t3 = time.time()
+    print(t3-t2, '   ', t3-t0)
+
+    check_sum = True
+
+    iter = 20
+
+    for n in range(iter) :
+
+        lap_mask_sum = lap_mask_float.sum(axis=0)
+        
+        for i in range(lap_mask.shape[0]):
+            t4 = time.time()
+            lap_mask_norm[i][lap_mask_sum>0] = lap_mask_float[i][lap_mask_sum>0] / lap_mask_sum[lap_mask_sum>0]
+            t5 = time.time()
+            print(i, '  ', t5-t4, '   ', t5-t0)
+    
+        lap_mask_norm[comb_mask>(0)] = 0
+        cv.imshow('Lap Mask Norm', lap_mask_norm.sum(axis=0))
+        cv.waitKey(1)
+
+        '''for i in range(lap_mask_norm.shape[0]):
+            cv.imshow('window', lap_mask_norm[i])
+            cv.waitKey(1000)    '''    
+
+
+
+        for i in range(images.shape[3]):
+            t6 = time.time()
+            comb[:,:,i][lap_mask_norm>0] = comb[:,:,i][lap_mask_norm>0] + (images[:,:,:,i][lap_mask_norm>0] * lap_mask_norm[lap_mask_norm>0]).sum(axis=0)
+            t7 = time.time()
+            print(i, '   ', t7-t6, '   ', t7-t0)
+        
+        
+
+        if n == iter-1:
+            break
+            
+        comb_mask = np.ones(comb_mask.shape)
+        comb_mask = lap_mask_sum * comb_mask
+        cv.imshow('comb mask', comb_mask[0])
+        cv.waitKey(1)
+        for i in range(lap_mask_float.shape[0]):
+            t8 = time.time()
+            lap_mask_float[i] = cv.GaussianBlur(lap_mask_float[i], (21,21), 0)
+            if n == iter-2:
+                lap_mask_float = lap_mask_float + 1
+            t9 = time.time()
+            print(i, '  ', t9-t8)
+        print('n = ', n)
+
+        cv.imshow('comb', comb)
+        cv.waitKey(1)
+
+
+
+    '''comb = np.zeros(images[0].shape, dtype='uint8')
+    comb_mask = np.zeros(lap_mask[0].shape, dtype='uint8') 
     diff_mask = np.zeros(lap_mask[0].shape, dtype='uint8')
     temp_maks = np.zeros(lap_mask[0].shape, dtype='uint8')
 
@@ -276,7 +344,7 @@ def reg_comb(images, order, trans_on, file_nums, thresh=15, norm_blur=11, n_iter
             cv.imshow('mask', comb_mask*255)
             cv.waitKey(1)
             cv.imshow('comb', comb)
-            cv.waitKey(1)
+            cv.waitKey(1)'''
 
     '''for i in order[1:]:
         t1 = time.time()
