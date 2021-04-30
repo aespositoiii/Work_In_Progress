@@ -7,6 +7,7 @@ import os
 import time
 import glob
 import shutil
+import math
 
 def import_describe(directory, ext, hist_min=0, hist_max=255):
 
@@ -56,12 +57,12 @@ def import_describe(directory, ext, hist_min=0, hist_max=255):
             shutil.rmtree(directory + 'transform/', ignore_errors=True)
 
         t0 = time.time()
-        for i in range(images.shape[0]):
+        '''for i in range(images.shape[0]):
                         print(i)
                         cv.imshow('images', images[i])
                         cv.waitKey(1)
                         cv.imshow('mask', lap_mask[i])
-                        cv.waitKey(1000)
+                        cv.waitKey(1000)'''
     
     if not os.path.exists(directory + 'transform/'):
         transformed = False
@@ -339,12 +340,11 @@ def reg_comb(images, order, trans_on, file_nums, transformed, ext=None, director
     t3 = time.time()
     print(t3-t2, '   ', t3-t0)
 
-    check_sum = True
-
     iter = 20
+    last_iter = False
 
     for n in range(iter) :
-
+        
         lap_mask_sum = lap_mask_float.sum(axis=0)
         
         for i in range(lap_mask.shape[0]):
@@ -370,27 +370,40 @@ def reg_comb(images, order, trans_on, file_nums, transformed, ext=None, director
             t7 = time.time()
             print(i, '   ', t7-t6, '   ', t7-t0)
         
+        cv.imshow('comb', comb)
+        cv.waitKey(1)
+
+        if (n == iter-1) | (last_iter==True):
+            break
+        
+        try:
+            print('Press [ctrl-c] for last iteration')
+            ti = time.time()
+            tb = 11
+            while (time.time() - ti) < 10:
+                pass
+            print('Continuing to next iteration')
+        except KeyboardInterrupt:
+            last_iter = True
+            print('\n\nInitiating last iteration...')
+        
         
 
-        if n == iter-1:
-            break
-            
         comb_mask = np.ones(comb_mask.shape)
         comb_mask = lap_mask_sum * comb_mask
         cv.imshow('comb mask', comb_mask[0])
         cv.waitKey(1)
+
         for i in range(lap_mask_float.shape[0]):
             t8 = time.time()
             lap_mask_float[i] = cv.GaussianBlur(lap_mask_float[i], ((9 + 2 * n),(9 + 2 * n)), 0)
-            if n == iter-2:
+            if (n == iter-2) | (last_iter == True):
                 lap_mask_float = lap_mask_float + 1
             t9 = time.time()
             print(i, '  ', t9-t8)
         print('n = ', n)
 
-        cv.imshow('comb', comb)
-        cv.waitKey(1)
-
+        
 
 
     '''comb = np.zeros(images[0].shape, dtype='uint8')
@@ -445,5 +458,5 @@ def reg_comb(images, order, trans_on, file_nums, transformed, ext=None, director
 
         cv.imshow('window', comb)
         cv.waitKey(1)'''
-
+    cv.destroyAllWindows()
     return comb
