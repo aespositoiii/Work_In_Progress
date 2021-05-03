@@ -7,7 +7,7 @@ import numpy as np
 import os
 import time
 
-directory = '/Users/anthonyesposito/Pictures/macroni/Rosasite_w_Conacalcite/1/JPG/'
+directory = '/Users/anthonyesposito/Pictures/macroni/Rosasite_w_Conacalcite/5/JPG/'
 destination = 'stacked'
 ext = '.jpg'
 hist_min = 10

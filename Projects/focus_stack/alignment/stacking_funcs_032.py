@@ -342,7 +342,7 @@ def reg_comb(images, order, trans_on, file_nums, transformed, ext=None, director
 
     iter = 20
     last_iter = False
-
+    
     for n in range(iter) :
         
         lap_mask_sum = lap_mask_float.sum(axis=0)
