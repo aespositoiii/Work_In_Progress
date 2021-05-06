@@ -14,7 +14,6 @@ def open():
     try:
         n = n
     except:
-
         n = 0
     top = Toplevel()
     top.title('OOOOoooooo, Another Window')
