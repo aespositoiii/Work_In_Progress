@@ -8,6 +8,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 # from tkmacosx import Button - allows background color and other features not available on macosx
 
+
+
 # create the root
 root = Tk() 
 root.title('Image Processing Application')
@@ -43,8 +45,8 @@ def proc_dev_interface():
                                             ['theta', ' - orientation angle', 0, 2, .05], 
                                             ['lambda', ' - wavelength', 0.05, 5, .05], 
                                             ['gamma', ' - aspect ratio', 0.05, 1, .01], 
-                                            ['psi', ' - phase offset', 0, 10, .25]],
-                                
+                                            ['psi', ' - phase offset', 0, 2, .25]],
+
                                 "Gauss": [
                                             ['size', ' - kernel size', 3, 100, 2]],
                                 
@@ -77,7 +79,7 @@ def proc_dev_interface():
                 except:
                     pass
 
-                kernel = cv.getGaborKernel((parameter_values[0], parameter_values[0]), parameter_values[1], parameter_values[2] * np.pi, parameter_values[3] * np.pi, parameter_values[4], parameter_values[5], ktype=cv.CV_32F)
+                kernel = cv.getGaborKernel((parameter_values[0], parameter_values[0]), parameter_values[1], parameter_values[2] * np.pi, parameter_values[3] * np.pi, parameter_values[4], parameter_values[5] * np.pi, ktype=cv.CV_32F)
                 
                 fig = plt.figure('Kernel Preview')
                 plt.title('Kernel')
