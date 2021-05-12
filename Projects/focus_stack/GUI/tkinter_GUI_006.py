@@ -38,7 +38,11 @@ def proc_dev_interface():
         
         
         process_ops_frame = LabelFrame(proc_dev_win, text = (process_select.get() + " Process Options"))
-        process_ops_frame.place(x=410, width=370, y=40, height=400)
+        process_ops_frame.place(x=410, width=370, y=40, height=600)
+        image_select_src = StringVar(value=image_names[0])
+        Label(process_ops_frame, text='Source Image Selection:', anchor='w').place(x=20, y=10)
+        image_source = OptionMenu(process_ops_frame, image_select_src, *image_names)
+        image_source.place(x=200, y=10)
 
         # ( ... , "process NAME" : [ 'PARAMETER NAME', ' - PARAMETER DESCRIPTION', SCALE MIN, SCALE MAX, RESOLUTION])
 
@@ -80,8 +84,15 @@ def proc_dev_interface():
 
         if process_select.get() == "Math":
                 def math_routine():
-                    math_routine_frame = LabelFrame(process_ops_frame, text = (math_type.get() + " Options"))
-                    math_routine_frame.place(relx=.05, rely=.45, width=330, height=200)
+
+                    global math_routine_frame
+
+                    try:
+                        math_routine_frame.pack_forget()
+                    except:
+                        pass
+                    math_routine_frame = LabelFrame(process_ops_frame, text = (math_type.get() + " Options"), height=20, width=20)
+                    math_routine_frame.place(x=10, y=150, height=420, width=340)
 
 
                     
@@ -89,15 +100,16 @@ def proc_dev_interface():
                 math_type = StringVar()
                 math_type.set('None')
                 math_option = process_ops_dict["Math"][0]
+                
                 for i in range(len(math_option)):
-                    Radiobutton( process_ops_frame, text=math_option[i], variable=math_type, command=math_routine, value=process_ops_dict["Math"][0][i]).place(relx=.1, rely = (.1 + i * .1))
+                    Radiobutton( process_ops_frame, text=math_option[i], variable=math_type, command=math_routine, anchor='w', value=process_ops_dict["Math"][0][i]).place(x=20, y=40+i*30)
 
         else:
             for parameters in parameter_list:
                 if parameters[-1] == 'scale':
                     exec( "global {}_scale".format(parameters[0]), globals())
                     exec( "{}_scale = Scale(process_ops_frame, label = '{}', from_= {}, to= {}, resolution = {}, orient= HORIZONTAL, length=300)".format((parameters[0]), (parameters[0]+parameters[1]), parameters[2], parameters[3], parameters[4]), globals())
-                    exec( "{}_scale.pack()".format(parameters[0]))
+                    exec( "{}_scale.place(x=10, y=40+{}*60)".format(parameters[0], parameter_list.index(parameters)))
         
         def preview_result():
             global parameter_values
@@ -156,11 +168,12 @@ def proc_dev_interface():
 
 
         #Button(process_ops_frame, text="Preview Mask", padx= 10, pady=10, command=preview_mask).pack()  
-        Button(proc_dev_win, text="Preview Result", padx= 10, pady=10, command=preview_result).place(x= 410, width=100, y = 460, height= 30)
+        Button(proc_dev_win, text="Preview Result", padx= 10, pady=10, command=preview_result).place(x= 410, width=100, y = 660, height= 30)
+        Button(proc_dev_win, text="Apply Result", padx= 10, pady=10, command=preview_result).place(x= 410, width=100, y = 700, height= 30)
 
     # Build the process selection frame
     process_frame = LabelFrame(proc_dev_win, text = "Process Selection")
-    process_frame.place(x=20, width=370, y=40, height=500) 
+    process_frame.place(x=20, width=370, y=40, height=700) 
     processes = [ "Gabor",
                 "Log_Gabor",
                 "Gauss",
@@ -194,21 +207,21 @@ def open_proc_dev_file():
     img = cv.imread(root.filename, cv.IMREAD_COLOR)
     
 
-    cv.imshow('Base Image', img)
+    cv.imshow('Base_Image', img)
     cv.waitKey(1)
 
-    images = np.zeros(img.shape[0:2], dtype='float32')
+    images = np.zeros(img.shape[0:2], dtype='uint8')
     images = images[np.newaxis,:,:]
     print(images.shape)
     imgG = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-    imgG = imgG.astype('float32')
-    imgG = cv.normalize(imgG, None, alpha=0, beta=1, norm_type=cv.NORM_MINMAX, dtype=cv.CV_32F)
+    #imgG = imgG.astype('float32')
+    imgG = cv.normalize(imgG, None, alpha=0, beta=255, norm_type=cv.NORM_MINMAX, dtype=cv.CV_8U)
     images[0] = imgG
-    image_names = ['Base_Image_Norm']
-    processing_summary = {
-                            image_names[0] : 
-    }
-    cv.imshow('norm grey', images[0])
+    image_names = ['Base_Image']
+    processing_summary = [[]]
+                            
+
+    cv.imshow('Base_Image_Gray', images[0])
     proc_dev_interface()
 
     proc_dev_button.place_forget()
@@ -236,7 +249,7 @@ def open_proc_dev():
             if messagebox.askyesno("Save Work?", "Would you like to save your progress?"):
                 print("Save Progress")
             proc_dev_win.destroy()
-            cv.destroyWindow("Base Image")
+            cv.destroyAllWindows()
             dev_im_proc_button["state"] = "normal"
             batch_proc_button["state"] = "normal"
 
