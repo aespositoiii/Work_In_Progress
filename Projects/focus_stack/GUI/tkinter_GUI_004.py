@@ -25,13 +25,12 @@ def proc_dev_interface():
     # Build the filter options
     
     def filter_options():
-
+        
         global parameter_list
         global filter_ops_frame
 
         try:
             filter_ops_frame.place_forget()
-            cv.destroyAllWindows()
             plt.close()
         except:
             pass
@@ -51,10 +50,10 @@ def proc_dev_interface():
                                             ['psi', ' - phase offset', 0, 2, .25]],
 
                                 "Log_Gabor": [
-                                            ['wavelength', ' - obvs', 1, 100, 1],
+                                            ['wavelength', ' - obvs', 1, imgG.shape[1]//4, 1],
                                             ['sigmaOnf', ' - standard deviation of filter', 0.005, 1, .005],
-                                            ['angle', ' - filter angle', 0.05, 2, .05],
-                                            ['thetaSigma', ' - standard deviation of the angle', 0.1, 5, .1]],
+                                            ['angle', ' - filter angle', 0., 1.95, .05],
+                                            ['thetaSigma', ' - standard deviation of the angle', 0.1, 3, .05]],
 
                                 "Gauss": [
                                             ['size', ' - kernel size', 3, 100, 2]],
@@ -64,10 +63,10 @@ def proc_dev_interface():
                                             ['min', ' - weak edge threshold', 0, 254, 1]],
                                 
                                 "Laplace": [
-                                            ['size', ' - kernal size', 3, 100, 1]],
+                                            ['size', ' - kernal size', 3, 31, 2]],
                                 
                                 "FFT": [
-                                            ['size', ' - filter size', 10, 100,1]]
+                                            ['size', ' - filter size', 10, imgG.shape[0]//2-1,1]]
                                 
                             }
         parameter_list = filter_ops_dict[filter_select.get()]
@@ -78,6 +77,7 @@ def proc_dev_interface():
         
         def preview_mask():
             global parameter_values
+            image = imgG
             parameter_values = [[]] * len(parameter_list)
             for i in range(len(parameter_list)):
                 exec('parameter_values[{}] = {}_scale.get()'.format(i,parameter_list[i][0]), globals())
@@ -85,7 +85,6 @@ def proc_dev_interface():
             if filter_select.get() == "Gabor":
                 try:
                     plt.close()
-                    cv.destroyAllWindows()
                 except:
                     pass
 
@@ -101,17 +100,52 @@ def proc_dev_interface():
                 cv.waitKey(1)
 
             elif filter_select.get() == "Log_Gabor":
-                try:
-                    plt.close()
-                    cv.destroyAllWindows()
-                except:
-                    pass
 
-                result, LG = log_gabor(imgG, 1/parameter_values[0], parameter_values[1], parameter_values[2], parameter_values[3])
+                result, LG = log_gabor(image, parameter_values[0], parameter_values[1], parameter_values[2], parameter_values[3])
                                 
                 cv.imshow('Mask Preview', LG)
                 cv.imshow('Filtered Image', result)
                 cv.waitKey(1)
+
+            elif filter_select.get() == "Gauss":
+
+                result = cv.GaussianBlur(image, (parameter_values[0], parameter_values[0]), 0)
+                                
+                cv.imshow('Mask Preview', result)
+                cv.waitKey(1)
+
+            elif filter_select.get() == "Canny":
+
+                result = cv.Canny(image, parameter_values[1], parameter_values[0])
+                                
+                cv.imshow('Mask Preview', result)
+                cv.waitKey(1)
+
+            elif filter_select.get() == "Laplace":
+                im = cv.GaussianBlur(image, (3, 3), 0)
+                result = cv.Laplacian(im, cv.CV_16S, ksize=parameter_values[0])
+                                
+                cv.imshow('Mask Preview', result)
+                cv.waitKey(1)
+
+            elif filter_select.get() == "FFT":
+
+                mask = np.zeros(image.shape)
+                mask[:parameter_values[0],:parameter_values[0]] = 1
+                mask[-parameter_values[0]:,:parameter_values[0]] = 1
+                mask[-parameter_values[0]:,-parameter_values[0]:] = 1
+                mask[:parameter_values[0],-parameter_values[0]:] = 1
+
+                img_F = np.fft.fft2(image)
+                img_F_filtered = img_F * mask
+                result = np.fft.ifft2(img_F_filtered)
+                result = np.real(result)
+
+                                
+                cv.imshow('Mask Preview', mask)
+                cv.imshow('Filtered Image', result)
+                cv.waitKey(1)
+
 
 
         #Button(filter_ops_frame, text="Preview Mask", padx= 10, pady=10, command=preview_mask).pack()  
@@ -121,7 +155,7 @@ def proc_dev_interface():
     # Build the filter selection frame
     filter_frame = LabelFrame(proc_dev_win, text = "Filter Selection")
     filter_frame.place(x=20, width=370, y=40, height=500) 
-    filters = [ "Gabor",
+    processes = [ "Gabor",
                 "Log_Gabor",
                 "Gauss",
                 "Canny",
@@ -131,8 +165,8 @@ def proc_dev_interface():
     filter_select = StringVar()
     filter_select.set("None")
     
-    for i in range(len(filters)):
-        Radiobutton( filter_frame, text=filters[i], variable=filter_select, command=filter_options, value=filters[i]).place(relx=.1, rely=(.05 + .8 *( i / (len(filters)-1))))
+    for i in range(len(processes)):
+        Radiobutton( filter_frame, text=processes[i], variable=filter_select, command=filter_options, value=processes[i]).place(relx=.1, rely=(.05 + .8 *( i / (len(processes)-1))))
     
     
     
