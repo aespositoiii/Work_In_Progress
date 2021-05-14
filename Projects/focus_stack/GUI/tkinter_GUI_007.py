@@ -155,8 +155,6 @@ def proc_dev_interface():
         
         def preview_result():
             global parameter_values
-            global result
-
             image = imgG
             parameter_values = [[]] * len(parameter_list)
             for i in range(len(parameter_list)):
@@ -180,6 +178,23 @@ def proc_dev_interface():
                 cv.imshow('Result', result)
                 cv.waitKey(1)
 
+                image_names.append('Mask' + mask_count)
+                images.append(result)
+
+                def apply_result():
+                    image_names.append('Mask' + mask_count)
+                    images.append(result)
+
+                    process_summary.append( {   'name'      : 'Mask' + mask_count,
+                                                'source'    : image_select_src.get(),
+                                                'image'     : result,
+                                                'process'   : process_select.get(),
+                                                'parameters': parameter_values
+                                                })
+                
+                    mask_count+=1
+                    process_options()
+
             elif process_select.get() == "Log_Gabor":
 
                 result, LG = log_gabor(image, parameter_values[0], parameter_values[1], parameter_values[2], parameter_values[3])
@@ -188,6 +203,20 @@ def proc_dev_interface():
                 cv.imshow('Result', result)
                 cv.waitKey(1)
 
+                def apply_result():
+                    image_names.append('Mask' + str(mask_count))
+                    images.append(result)
+
+                    process_summary.append( {   'name'      : 'Mask' + str(mask_count),
+                                                'source'    : image_select_src.get(),
+                                                'image'     : result,
+                                                'process'   : process_select.get(),
+                                                'parameters': parameter_values
+                                                })
+
+                    mask_count+=1
+                    process_options()
+                     
 
             elif process_select.get() == "Gauss":
 
@@ -195,7 +224,20 @@ def proc_dev_interface():
                                 
                 cv.imshow('Result', result)
                 cv.waitKey(1)
-                
+
+
+                def apply_result():
+                    image_names.append(('Mask' + mask_count))
+                    images.append(result)
+
+                    process_summary.append( {   'name'      : 'Mask' + mask_count,
+                                                'source'    : image_select_src.get(),
+                                                'image'     : result,
+                                                'process'   : process_select.get(),
+                                                'parameters': parameter_values
+                                                })
+                    mask_count+=1
+                    process_options()
 
             elif process_select.get() == "Canny":
 
@@ -203,7 +245,20 @@ def proc_dev_interface():
                                 
                 cv.imshow('Result', result)
                 cv.waitKey(1)
-                
+
+
+                def apply_result():
+                    image_names.append('Mask' + mask_count)
+                    images.append(result)
+
+                    process_summary.append( {   'name'      : 'Mask' + mask_count,
+                                                'source'    : image_select_src.get(),
+                                                'image'     : result,
+                                                'process'   : process_select.get(),
+                                                'parameters': parameter_values
+                                                })
+                    mask_count+=1
+                    process_options()
 
             elif process_select.get() == "Laplace":
                 im = cv.GaussianBlur(image, (3, 3), 0)
@@ -213,26 +268,25 @@ def proc_dev_interface():
                 cv.waitKey(1)
 
 
+                def apply_result():
+                    image_names.append('Mask' + mask_count)
+                    images.append(result)
 
-            
+                    process_summary.append( {   'name'      : 'Mask' + mask_count,
+                                                'source'    : image_select_src.get(),
+                                                'image'     : result,
+                                                'process'   : process_select.get(),
+                                                'parameters': parameter_values
+                                                })
+                    mask_count+=1
+                    process_options()
+
         def apply_result():
-            print(process_select.get())
-            if process_select.get() in [ "Gabor", "Log_Gabor", "Gauss", "Canny", "Laplace"]:
-
-                image_names.append('Mask' + str(mask_count))
-                print(image_names)
-                images.append(result)
-
-                process_summary.append( {   'name'      : 'Mask' + str(mask_count),
-                                            'source'    : image_select_src.get(),
-                                            'image'     : result,
-                                            'process'   : process_select.get(),
-                                            'parameters': parameter_values
-                                            })
+            pass
 
         Button(proc_dev_win, text="Preview Result", padx= 10, pady=10, command=preview_result).place(x= 410, width=100, y = 660, height= 30)
         Button(proc_dev_win, text="Apply Result", padx= 10, pady=10, command=apply_result).place(x= 410, width=100, y = 700, height= 30)
- 
+
 
 
     # Build the process selection frame
