@@ -10,8 +10,23 @@ from log_gabor.log_gabor import log_gabor
 import os
 from datetime import datetime
 import json
+
+from numpy.lib.npyio import save
 # from tkmacosx import Button - allows background color and other features not available on macosx
 
+
+def plot_hist(image, title):
+    hist_figure = plt.figure(title)
+    plt.clf()
+    plt.title(title)
+    histogram = np.histogram(image.ravel(), bins=256, range=[0,256])
+    plt.yscale('log')
+    plt.plot(histogram[1][0:256], histogram[0])
+    plt.xlim(0, 255)
+    plt.ylim(1, histogram[0].max());
+    plt.yscale('log')
+    plt.draw()
+    plt.show(block=False)
 
 
 # create the root
@@ -22,6 +37,8 @@ root.geometry("200x400")
 # Function def to open a new window
 
 def proc_dev_interface():
+
+    global process_ops_dict
 
     proc_dev_win.geometry("800x1000")
 
@@ -42,7 +59,9 @@ def proc_dev_interface():
         global norm_select
         global norm_option
         global math_routine
+        global save_mask_button
         global save_process
+        global morph_select
 
         #   Clear the operation frame when a new process is selected
 
@@ -66,76 +85,6 @@ def proc_dev_interface():
         # For Options utilizing scales for parameter selection:
         # ( ... , "process NAME" : [ 'PARAMETER NAME', ' - PARAMETER DESCRIPTION', SCALE MIN, SCALE MAX, RESOLUTION])
 
-
-        process_ops_dict =   {   "Gabor": [
-                                            ['ksize', ' - kernel size', 3, 100, 1, 'scale'], 
-                                            ['sigma', ' - standard dev.', 1, 5, .1, 'scale'], 
-                                            ['theta', ' - orientation angle', 0, 2, .05, 'scale'], 
-                                            ['lambda', ' - wavelength', 1, 10, 1, 'scale'], 
-                                            ['gamma', ' - aspect ratio', 0.05, 1, .01, 'scale'], 
-                                            ['psi', ' - phase offset', 0, 2, .25, 'scale']],
-
-                                "Log_Gabor": [
-                                            ['f0', ' - mean frequency', 1, imgG.shape[1]//4, 1, 'scale'],
-                                            ['sigmaOnf', ' - standard deviation of filter', 0.005, 1, .005, 'scale'],
-                                            ['angle', ' - filter angle', 0., 1.95, .05, 'scale'],
-                                            ['thetaSigma', ' - standard deviation of the angle', 0.1, 3, .05, 'scale']],
-
-                                "Gauss": [
-                                            ['size', ' - kernel size', 3, 100, 2, 'scale']],
-                                
-                                "Canny": [
-                                            ['max', ' - strong edge threshold', 1, 255, 1, 'scale'],
-                                            ['min', ' - weak edge threshold', 0, 254, 1, 'scale']],
-                                
-                                "Laplace": [
-                                            ['size', ' - kernal size', 3, 31, 2, 'scale']],
-
-                                "Math": [   ['Arithmetic', 'Compare', 'Logs_and_Exponents'],
-
-                                            {
-                                            'Arithmetic': ['Add', 'Subtract', 'Multiply', 'Divide'],
-                                            'Comparisons': ['Max', 'Min'],
-                                            'Logs_and_Exponents': ['(im)^n', 'e^(im)]', 'log(im)']
-                                            }],
-                                
-                                "Thresholding":
-                                        [   [   'Binary', 
-                                                'Inverse_Binary', 
-                                                'Truncated', 
-                                                'To_Zero', 
-                                                'Inverse_To_Zero', 
-                                                'Adaptive_Thresh_Mean_C', 
-                                                'Adaptive_Thresh_Gaussian_C', 
-                                                'Otsu_Bin', 
-                                                'Triangle_Bin'],
-                                            
-                                            [   ['Threshold', ' - boundary value', 0, 255, 1],
-                                                ['Maximum_Value', ' - binary value', 0,255,1],
-                                                ['Block_Size', ' - area for threshold averaging', 3,255,2],
-                                                ['Constant_Offset', ' - binary offset', 0,255,1]]],
-
-                                "Normalize":
-                                        [   [   'Norm_Inf', 
-                                                #'Norm_L1', 
-                                                #'Norm_L2', 
-                                                #'Norm_L2_Square', 
-                                                #'Norm_Hamming', 
-                                                #'Norm_Hamming2', 
-                                                #'Norm_Relative', 
-                                                'Norm_Min_Max'],
-                                            
-                                            [   ['Alpha', ' - lower bound or norm value', 0, 255, 1],
-                                                ['beta', ' - upper bound or N/A', 0,255,1]]],
-                                
-                                "Miscellaneous":
-                                        [   [   'Invert'
-
-
-                                            ]]
-                                
-                            }
-        
 
         filter_list = [ "Gabor",
                         "Log_Gabor",
@@ -326,6 +275,87 @@ def proc_dev_interface():
 
             for i in range(len(norm_option)):
                 Radiobutton( process_ops_frame, text=norm_option[i], variable=norm_select, command=norm_routine, anchor='w', value = norm_option[i]).place(x=20, y=40+i*30)
+        
+        
+        # Generate the options for the Miscellaneous filters.
+                
+        elif process_select.get() == "Miscellaneous":
+            
+            def misc_routine():
+                global misc_ops_frame
+                global misc_select
+                global parameter_list
+                
+
+                try:
+                    misc_ops_frame.place_forget()
+                    #plt.close()
+                except:
+                    pass
+                
+                '''misc_ops_frame = LabelFrame(process_ops_frame, text = (process_select.get() + " Process Options"))
+                misc_ops_frame.place(x=10, y=70+len(misc_option)*30, width=340, height=230)'''
+
+                '''parameter_list = process_ops_dict["Normalize"][1]
+                for parameters in parameter_list:
+                    exec( "global {}_scale".format(parameters[0]), globals())
+                    exec( "{}_scale = Scale(norm_ops_frame, label = '{}', from_= {}, to= {}, resolution = {}, orient= HORIZONTAL, length=300)".format((parameters[0]), (parameters[0]+parameters[1]), parameters[2], parameters[3], parameters[4]), globals())
+                    exec( "{}_scale.place(x=10, y=10 + {}*60)".format(parameters[0], parameter_list.index(parameters)))'''
+            
+            misc_option = process_ops_dict["Miscellaneous"][0]
+            
+            misc_select = StringVar()
+            misc_select.set('N/A')
+
+            for i in range(len(misc_option)):
+                Radiobutton( process_ops_frame, text=misc_option[i], variable=misc_select, command=misc_routine, anchor='w', value = misc_option[i]).place(x=20, y=40+i*30)
+
+
+        elif process_select.get() == "Morphology":
+            
+            def morph_routine():
+                global morph_ops_frame
+                global parameter_list
+                global morph_kernel_select
+                global morph_select
+                
+
+                try:
+                    morph_ops_frame.place_forget()
+                    #plt.close()
+                except:
+                    pass
+                
+                morph_ops_frame = LabelFrame(process_ops_frame, text = (process_select.get() + " Process Options"))
+                morph_ops_frame.place(x=10, y=30+len(morph_option)*30, width=340, height=340)
+
+                morph_kernel_option = process_ops_dict["Morphology"][1]
+                
+                morph_kernel_select = StringVar()
+                morph_kernel_select.set('N/A')
+
+                for i in range(len(morph_kernel_option)):
+                    Radiobutton( morph_ops_frame, text=morph_kernel_option[i], variable=morph_kernel_select, anchor='w', value = morph_kernel_option[i]).place(x=20, y=10+i*30)
+
+                if (morph_select.get() == 'Erode') | (morph_select.get() == 'Dilate'):
+                    parameter_list = process_ops_dict["Morphology"][2]
+
+                else:
+                    parameter_list = process_ops_dict["Morphology"][2][:2]
+                
+                for parameters in parameter_list:
+                    exec( "global {}_scale".format(parameters[0]), globals())
+                    exec( "{}_scale = Scale(morph_ops_frame, label = '{}', from_= {}, to= {}, resolution = {}, orient= HORIZONTAL, length=300)".format((parameters[0]), (parameters[0]+parameters[1]), parameters[2], parameters[3], parameters[4]), globals())
+                    exec( "{}_scale.place(x=10, y=120 + {}*60)".format(parameters[0], parameter_list.index(parameters)))
+            
+            morph_option = process_ops_dict["Morphology"][0]
+            
+            morph_select = StringVar()
+            morph_select.set('N/A')
+
+            for i in range(len(morph_option)):
+                Radiobutton( process_ops_frame, text=morph_option[i], variable=morph_select, command=morph_routine, anchor='w', value = morph_option[i]).place(x=20, y=40+i*30)
+        
 
 
 
@@ -342,6 +372,8 @@ def proc_dev_interface():
             global second_select_src
             global result
             global operand2
+            global morph_select
+            global morph_kernel_select
             
             apply_button['state'] = 'normal'
 
@@ -349,7 +381,7 @@ def proc_dev_interface():
 
             result = np.zeros(image_selection.shape, image_selection.dtype)
 
-            use_parameters = ["Gabor", "Log_Gabor", "Gauss", "Canny", "Laplace", "Thresholding", "Normalize"]
+            use_parameters = ["Gabor", "Log_Gabor", "Gauss", "Canny", "Laplace", "Thresholding", "Normalize", "Morphology"]
 
 
             if process_select.get() in use_parameters:
@@ -455,16 +487,26 @@ def proc_dev_interface():
                     result = image_selection.astype('float32')
                     result = result/255
                     result = cv.pow(result, operand2)
-                    result = 255 * result / result.max()
+                    result = 255 * result
                     result = result.astype('uint8')
                     print(math_operation.get())
 
                 elif math_operation.get() == 'e^(im)]':
-                    result = cv.exp(image_selection)
+                    result = image_selection.astype('float32')
+                    print(result.max())
+                    result = result/255
+                    print(result.max())
+                    result = np.exp(image_selection)
+                    result = 255 * result
+                    result = result.astype('uint8')                    
                     print(math_operation.get())
                     
                 elif math_operation.get() == 'log(im)':
-                    result = cv.log(image_selection)
+                    result = image_selection.astype('float32')
+                    result = result/255                    
+                    result = np.log(image_selection)
+                    result = 255 * result
+                    result = result.astype('uint8')                      
                     print(math_operation.get())
 
                 math_routine()
@@ -552,24 +594,55 @@ def proc_dev_interface():
                 elif norm_select.get() == 'Norm_Min_Max':
                     result = cv.normalize(image_selection, result, alpha=parameter_values[0], beta=parameter_values[1], norm_type=cv.NORM_MINMAX, dtype=cv.CV_8U)
 
+
+            elif process_select.get() == "Miscellaneous":
+
+                if misc_select.get() == 'Invert':
+                    result = (255 * np.ones(image_selection.shape, dtype='uint8')) - image_selection
+
+
+            elif process_select.get() == "Morphology":
+
+                # Set the kernel for morphological operation
+                print(morph_kernel_select.get())
+
+                if morph_kernel_select.get() == 'Rectangle':
+                    morph_kernel = cv.getStructuringElement(cv.MORPH_RECT,( parameter_values[0], parameter_values[1]))
+
+                elif morph_kernel_select.get() == 'Cross':
+                    morph_kernel = cv.getStructuringElement(cv.MORPH_CROSS,( parameter_values[0], parameter_values[1]))
+
+                elif morph_kernel_select.get() == 'Ellipse':
+                    morph_kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE,( parameter_values[0], parameter_values[1]))
+
+                # Apply the morphological operation
+
+                if morph_select.get() == 'Erode':
+                    result = cv.erode(image_selection, morph_kernel, iterations = parameter_values[2])
+
+                elif morph_select.get() == 'Dilate':
+                    result = cv.dilate(image_selection, morph_kernel, iterations = parameter_values[2])
+
+                elif morph_select.get() == 'Open':
+                    result = cv.morphologyEx( image_selection, cv.MORPH_OPEN, morph_kernel)
+
+                elif morph_select.get() == 'Close':
+                    result = cv.morphologyEx( image_selection, cv.MORPH_CLOSE, morph_kernel)
+
+                elif morph_select.get() == 'Morph_Gradient':
+                    result = cv.morphologyEx( image_selection, cv.MORPH_GRADIENT, morph_kernel)
+
+                elif morph_select.get() == 'Top_Hat':
+                    result = cv.morphologyEx( image_selection, cv.MORPH_TOPHAT, morph_kernel)
+
+                elif morph_select.get() == 'Black_Hat':
+                    result = cv.morphologyEx( image_selection, cv.MORPH_BLACKHAT, morph_kernel)
+
             #print(type(image_selection), parameter_values[0], parameter_values[1])
             print(type(result))
             cv.imshow('Result', result)
 
-            hist_figure = plt.figure('Histogram')
-            plt.clf()
-            plt.title('Histogram')
-            histogram = np.histogram(result.ravel(), bins=256, range=[0,256])
-            print(histogram)
-            print(histogram[0].shape, histogram[1].shape)
-            plt.yscale('log')
-            plt.plot(histogram[1][0:256], histogram[0])
-            #plt.hist(result.ravel(),256,np.arange(0,256))
-            plt.xlim(0, 255)
-            plt.ylim(0, histogram[0].max());
-            plt.yscale('log')
-            plt.draw()
-            plt.show(block=False)
+            plot_hist(result, 'Result Histogram')
             
 
 
@@ -583,14 +656,19 @@ def proc_dev_interface():
             global image_source
             global result
             global operand2
+            global save_mask_win
 
             apply_button['state'] = 'disabled'
-            save_mask_button['state'] = 'normal'
+
+            try:
+                if 'normal' == save_mask_win.state():
+                    save_mask_button['state'] = 'disabled'
+            except:
+                save_mask_button['state'] = 'normal'
             save_process_button['state'] = 'normal' 
 
-            print(process_select.get())
-            image_names.append(process_select.get()+ '_' + str(mask_count) + '_' + str(image_names.index(image_select_src.get())))
-            mask_count+=1
+            #image_names.append(process_select.get()+ '_' + str(mask_count) + '_' + str(image_names.index(image_select_src.get())))
+            
             print(image_names)
             images.append(result)
 
@@ -601,6 +679,8 @@ def proc_dev_interface():
                                             'process'           : process_select.get(),
                                             'parameters'        : parameter_values
                                             })
+
+                image_names.append(process_select.get()+ '_' + str(mask_count) + '_' + str(image_names.index(image_select_src.get())))
             
             elif process_select.get() == 'Math':
                 
@@ -608,37 +688,76 @@ def proc_dev_interface():
                 second_term_name = 'N/A'
                 constant_term = 'N/A'
 
-                try:
+                if (math_type.get() == 'Arithmetic') | (math_type.get() == 'Compare'):
+
                     if const.get() == False:
+
                         second_term = image_names.index(second_select_src.get())
                         second_term_name = second_select_src.get()
-                    else:
-                        constant_term = operand2
+                        image_names.append(math_type.get()+ '_' + str(mask_count) + '_' + str(image_names.index(image_select_src.get())) + '_' + str(second_term))
 
-                except:
-                    pass
+                    else:
+
+                        constant_term = operand2
+                        image_names.append(math_type.get()+ '_' + str(mask_count) + '_' + str(image_names.index(image_select_src.get())) + '_c' + str(constant_term))
+
+
+                elif math_operation.get() == '(im)^n':
+
+                    image_names.append(math_type.get()+ '_' + str(mask_count) + '_' + str(image_names.index(image_select_src.get())) + '_c' + str(math_constant.get))
+
+
+                elif math_type.get() == 'Logs_and_Exponents':
+
+                    image_names.append(math_type.get()+ '_' + str(mask_count) + '_' + str(image_names.index(image_select_src.get())))
+
 
                 process_summary.append( {   'src_im_ind'        : image_names.index(image_select_src.get()),
                                             'source_im_name'    : image_select_src.get(),
                                             'src_im_ind2'       : second_term,
                                             'source_im_name2'   : second_term_name,
                                             'process'           : math_operation.get(),
-                                            'constant_term'       : constant_term
+                                            'constant_term'     : constant_term
                                             })
 
             elif process_select.get() == 'Thresholding':
 
+                image_names.append(thresh_select.get()+ '_' + str(mask_count) + '_' + str(image_names.index(image_select_src.get())))
+
                 process_summary.append( {   'src_im_ind'        : image_names.index(image_select_src.get()),
                                             'source_im_name'    : image_select_src.get(),
-                                            'process'           : process_select.get(),
+                                            'process'           : thresh_select.get(),
                                             'parameters'        : parameter_values
                                             })
 
             elif process_select.get() == 'Normalize':
+                
+                image_names.append(norm_select.get()+ '_' + str(mask_count) + '_' + str(image_names.index(image_select_src.get())))
 
                 process_summary.append( {   'src_im_ind'        : image_names.index(image_select_src.get()),
                                             'source_im_name'    : image_select_src.get(),
-                                            'process'           : process_select.get(),
+                                            'process'           : norm_select.get(),
+                                            'parameters'        : parameter_values
+                                            })
+
+            elif process_select.get() == 'Miscellaneous':
+                
+                image_names.append(misc_select.get()+ '_' + str(mask_count) + '_' + str(image_names.index(image_select_src.get())))
+
+                if misc_select.get() == 'Invert':
+                    process_summary.append( {   'src_im_ind'        : image_names.index(image_select_src.get()),
+                                                'source_im_name'    : image_select_src.get(),
+                                                'process'           : misc_select.get(),
+                                                })                
+
+            elif process_select.get() == "Morphology":
+
+                image_names.append(morph_select.get()+ '_' + str(mask_count) + '_' + str(image_names.index(image_select_src.get())))
+
+                process_summary.append( {   'src_im_ind'        : image_names.index(image_select_src.get()),
+                                            'source_im_name'    : image_select_src.get(),
+                                            'process'           : morph_select.get(),
+                                            'kernel'            : morph_kernel_select.get(),
                                             'parameters'        : parameter_values
                                             })
 
@@ -653,33 +772,54 @@ def proc_dev_interface():
             image_source = OptionMenu(process_ops_frame, image_select_src, *image_names)
             image_source.place(x=200, y=10)
 
+            mask_count+=1
+
         
 ##################################      Save Processed Images       ###########################################################
 
         def save_mask():
+
+            global save_mask_button
+            global save_mask_win
+
+            save_mask_button['state'] = 'disabled'
+
             save_mask_win = Toplevel()
             save_mask_win.geometry("200x200")
             save_mask_win.title("Save Mask")
 
             def preview_save():
 
-                cv.imshow('Saved Mask Preview', images[image_names.index(save_mask_selection.get())])
+                image_select = images[image_names.index(save_mask_selection.get())]
+
+                plot_hist(image_select, (save_mask_selection.get()+' Result Histogram'))
+
+                cv.imshow('Saved Mask Preview', image_select)
 
             def save_image():
                 save_image_filename = filedialog.asksaveasfilename(filetypes = [('jpeg image files', '*.jpg')])
                 print(save_image_filename)
                 cv.imwrite(save_image_filename, images[image_names.index(save_mask_selection.get())])
 
-                
+            def close_all_previews():
+                cv.destroyAllWindows()
+                plt.close('all')
+
+            def on_save_win_closing():
+                save_mask_win.destroy()
+                save_mask_button['state'] = 'normal'
+
+            save_mask_win.protocol("WM_DELETE_WINDOW", on_save_win_closing)
 
             save_mask_selection = StringVar()
 
-            save_image_options = image_names[1:]
+            save_image_options = image_names
             save_mask_source = OptionMenu(save_mask_win, save_mask_selection, *save_image_options)
             save_mask_source.place(x=10, y=10)
-            Button(save_mask_win, text = 'Preview Save Image', command=preview_save).place(x=10, y=50, width = 180, height = 40)
-            Button(save_mask_win, text = 'Save Image', command=save_image).place(x=10, y=100, width = 180, height = 40)
 
+            Button(save_mask_win, text = 'Preview', command=preview_save).place(x=10, y=50, width = 180, height = 40)
+            Button(save_mask_win, text = 'Save Image', command=save_image).place(x=10, y=100, width = 180, height = 40)
+            Button(save_mask_win, text = 'Close Image Previews', command=close_all_previews).place(x=10, y=150, width = 180, height = 40)
 
 #####################################      Save Process Summary      ###########################################################
 
@@ -712,7 +852,7 @@ def proc_dev_interface():
         apply_button = Button(proc_dev_win, text="Apply Result", state=DISABLED, padx= 10, pady=10, command=apply_result)
         apply_button.place(x= 410, width=100, y = 700, height= 30)
         
-        save_mask_button =  Button(proc_dev_win, text="Save Mask", state=DISABLED, padx= 10, pady=10, command=save_mask)
+        save_mask_button = Button(proc_dev_win, text="Display/Save", state=DISABLED, padx= 10, pady=10, command=save_mask)
         save_mask_button.place(x= 520, width=100, y = 660, height= 30)
 
         save_process_button =  Button(proc_dev_win, text="Save Process", state=DISABLED, padx= 10, pady=10, command=save_process)
@@ -720,21 +860,101 @@ def proc_dev_interface():
 
         if len(images) > 1:
             save_process_button['state'] = 'normal'
-            save_mask_button['state'] = 'normal'
+            
 
 
 #####################################      Build the process selection frame    ################################################
 
+
+    process_ops_dict =   {   "Gabor": [
+                                            ['ksize', ' - kernel size', 3, 100, 1, 'scale'], 
+                                            ['sigma', ' - standard dev.', 1, 5, .1, 'scale'], 
+                                            ['theta', ' - orientation angle', 0, 2, .05, 'scale'], 
+                                            ['lambda', ' - wavelength', 1, 10, 1, 'scale'], 
+                                            ['gamma', ' - aspect ratio', 0.05, 1, .01, 'scale'], 
+                                            ['psi', ' - phase offset', 0, 2, .25, 'scale']],
+
+                                "Log_Gabor": [
+                                            ['f0', ' - mean frequency', 1, imgG.shape[1]//4, 1, 'scale'],
+                                            ['sigmaOnf', ' - standard deviation of filter', 0.005, 1, .005, 'scale'],
+                                            ['angle', ' - filter angle', 0., 1.95, .05, 'scale'],
+                                            ['thetaSigma', ' - standard deviation of the angle', 0.1, 3, .05, 'scale']],
+
+                                "Gauss": [
+                                            ['size', ' - kernel size', 3, 100, 2, 'scale']],
+                                
+                                "Canny": [
+                                            ['max', ' - strong edge threshold', 1, 255, 1, 'scale'],
+                                            ['min', ' - weak edge threshold', 0, 254, 1, 'scale']],
+                                
+                                "Laplace": [
+                                            ['size', ' - kernal size', 3, 31, 2, 'scale']],
+
+                                "Math": [   ['Arithmetic', 'Compare', 'Logs_and_Exponents'],
+
+                                            {
+                                            'Arithmetic': ['Add', 'Subtract', 'Multiply', 'Divide'],
+                                            'Compare': ['Max', 'Min'],
+                                            'Logs_and_Exponents': ['(im)^n'] #, 'e^(im)]', 'log(im)' ]
+                                            }],
+                                
+                                "Thresholding":
+                                        [   [   'Binary', 
+                                                'Inverse_Binary', 
+                                                'Truncated', 
+                                                'To_Zero', 
+                                                'Inverse_To_Zero', 
+                                                'Adaptive_Thresh_Mean_C', 
+                                                'Adaptive_Thresh_Gaussian_C', 
+                                                'Otsu_Bin', 
+                                                'Triangle_Bin'],
+                                            
+                                            [   ['Threshold', ' - boundary value', 0, 255, 1],
+                                                ['Maximum_Value', ' - binary value', 0,255,1],
+                                                ['Block_Size', ' - area for threshold averaging', 3,255,2],
+                                                ['Constant_Offset', ' - binary offset', 0,255,1]]],
+
+                                "Normalize":
+                                        [   [   'Norm_Inf', 
+                                                #'Norm_L1', 
+                                                #'Norm_L2', 
+                                                #'Norm_L2_Square', 
+                                                #'Norm_Hamming', 
+                                                #'Norm_Hamming2', 
+                                                #'Norm_Relative', 
+                                                'Norm_Min_Max'],
+                                            
+                                            [   ['Alpha', ' - lower bound or norm value', 0, 255, 1],
+                                                ['beta', ' - upper bound or N/A', 0,255,1]]],
+                                
+                                "Miscellaneous":
+                                        [   [   'Invert'
+
+
+                                            ]],
+
+                                "Morphology":
+                                        [   [   'Erode',
+                                                'Dilate',
+                                                'Open',
+                                                'Close',
+                                                'Morph_Gradient',
+                                                'Top_Hat',
+                                                'Black_Hat'],
+                                                
+                                            [   'Rectangle',
+                                                'Cross',
+                                                'Ellipse'],
+                                                
+                                            [   ['Kernel_Height', ' - Height of the morphological kernel', 3, 300, 1],
+                                                ['Kernel_Width', ' - Width of the morphological kernel', 3, 300, 1],
+                                                ['Iterations', ' - number of iterations', 1, 100, 1]]]
+                                
+                            }
+
     process_frame = LabelFrame(proc_dev_win, text = "Process Selection")
     process_frame.place(x=20, width=370, y=40, height=700) 
-    processes = [ "Gabor",
-                "Log_Gabor",
-                "Gauss",
-                "Canny",
-                "Laplace",
-                "Math",
-                "Thresholding",
-                "Normalize"]
+    processes = list(process_ops_dict.keys())
 
     process_select = StringVar()
     process_select.set("N/A")
