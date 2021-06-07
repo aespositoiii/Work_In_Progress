@@ -44,7 +44,7 @@ def proc_dev_interface():
     proc_dev_win = Toplevel()
     proc_dev_win.title("Process Development")
     proc_dev_win.geometry("800x1000")
-
+    
     def on_process_closing():
         if messagebox.askokcancel("Leave Process Development", "Do you want to leave process development?"):
             if len(images) > 1:
@@ -463,8 +463,6 @@ def proc_dev_interface():
                     for j in zeroed:
                         result[result==j]=0
 
-                    result[result>0] = 255
-
                 cv.imshow('Mask Preview', LG)
 
 
@@ -748,7 +746,9 @@ def proc_dev_interface():
                                             })
 
                 if process_select.get() == "Log_Gabor":
+                    process_summary[-1]["truncate"] = False
                     if truncate.get() == True:
+                        process_summary[-1]["truncate"] = True
                         process_summary[-1]["trunc_exp"] = truncate_scale.get()
 
                 
@@ -1049,7 +1049,7 @@ def proc_dev_interface():
     
 
 
-# Open the file for process development
+#####################################      Open the file for process development    ################################################
 
 def open_proc_dev_file():
 
@@ -1328,7 +1328,11 @@ def open_batch_proc():
 
         def batch_process_images():
 
+            global batch_proc_win
             global process_summary_filename
+            global images_save
+
+            batch_proc_win.destroy()
 
             head, tail = os.path.split(process_summary_filename)
 
@@ -1337,298 +1341,301 @@ def open_batch_proc():
             now = datetime.now()
             batch_folder_name = head+'/Batch_{}{}{}_{}{}/'.format(now.year, now.month, now.day, now.hour, now.minute)
             print(batch_folder_name)
-            #os.mkdir(batch_folder_name)
+            os.mkdir(batch_folder_name)
 
             processed_image_folders = []
 
             for i in images_save:
                 processed_image_folders.append(batch_folder_name + i + '/')
-                #os.mkdir(processed_image_folders[-1])
+                os.mkdir(processed_image_folders[-1])
+
+            math_list = ['Add', 'Subtract', 'Multiply', 'Divide', 'Max', 'Min', '(im)^n']
+            morph_list = ['Erode', 'Dilate', 'Open', 'Close', 'Morph_Gradient', 'Top_Hat', 'Black_Hat']
+
+
 
             for i in image_filenames:
                 
                 base_color = cv.imread(i, cv.IMREAD_COLOR)
                 images = cv.cvtColor(base_color, cv.COLOR_BGR2GRAY)
                 images = images[:,:, np.newaxis]
+
+                head, tail = os.path.split(i)
+                filename = os.path.splitext(tail)
                 
                 for j in process_summary_dict:
+                    
+                    im_name_string = 'Image Name: {}'.format(filename[0])
+                    im_prog_string = 'Image: {} of {}'.format(image_filenames.index(i)+1, len(image_filenames))
+                    process_name_string = 'Proocess Name: {}'.format(j['im_name'])
+                    procees_prog_string = 'Proocess: {} of {}'.format(process_summary_dict.index(j)+1, len(process_summary_dict))
+
+                    print('\n\n')
+                    print(im_name_string)
+                    print(im_prog_string)
+                    print(process_name_string)
+                    print(procees_prog_string)
+
                     process = j['process']
 
-                    if process_select.get() == "Gabor":
-                        
-                        '''
-                        try:
-                            plt.close()
-                        except:
-                            pass
-                        '''
+                    if process == "Gabor":
 
-                        kernel = cv.getGaborKernel((parameter_values[0], parameter_values[0]), parameter_values[1], parameter_values[2] * np.pi, parameter_values[3] * np.pi, parameter_values[4], parameter_values[5] * np.pi, ktype=cv.CV_32F)
+                        kernel = cv.getGaborKernel((j['parameters'][0], j['parameters'][0]), j['parameters'][1], j['parameters'][2] * np.pi, j['parameters'][3] * np.pi, j['parameters'][4], j['parameters'][5] * np.pi, ktype=cv.CV_32F)
+
+                        result = cv.filter2D(images[:,:,j['src_im_ind']], cv.CV_8U, kernel)
                         
-                        kernel_figure = plt.figure('Kernel Preview')
-                        plt.clf()
-                        plt.title('Kernel')
-                        plt.imshow(kernel)
-                        plt.draw()
-                        plt.show(block=False)
                         
-                        result = cv.filter2D(image_selection, cv.CV_8U, kernel)
-                        print(result.dtype)
 
 
-                    elif process_select.get() == "Log_Gabor":
+                    elif process == "Log_Gabor":
 
-                        result, LG = log_gabor(image_selection, parameter_values[0], parameter_values[1], parameter_values[2], parameter_values[3])
+                        result, LG = log_gabor(images[:,:,j['src_im_ind']], j['parameters'][0], j['parameters'][1], j['parameters'][2], j['parameters'][3])
                         
-                        if truncate.get() == True:
+                        if j['truncate'] == True:
                             histogram = np.histogram(result.ravel(), bins=256, range=[0,256])
 
                             
-                            zeroed = np.where([histogram[0] > 10**truncate_scale.get()])[1]
+                            zeroed = np.where([histogram[0] > 10**j['trunc_exp']])[1]
 
-                            for j in zeroed:
-                                result[result==j]=0
+                            for k in zeroed:
+                                result[result==k]=0
 
                             result[result>0] = 255
 
-                        cv.imshow('Mask Preview', LG)
-
-
-                    elif process_select.get() == "Gauss":
-
-                        result = cv.GaussianBlur(image_selection, (parameter_values[0], parameter_values[0]), 0)
                         
 
-                    elif process_select.get() == "Canny":
 
-                        result = cv.Canny(image_selection, parameter_values[1], parameter_values[0])
+                    elif process == "Gauss":
+
+                        result = cv.GaussianBlur(images[:,:,j['src_im_ind']], (j['parameters'][0], j['parameters'][0]), 0)
+                        
+
+                    elif process == "Canny":
+
+                        result = cv.Canny(images[:,:,j['src_im_ind']], j['parameters'][1], j['parameters'][0])
                                         
 
-                    elif process_select.get() == "Laplace":
+                    elif process == "Laplace":
 
-                        im = cv.GaussianBlur(image_selection, (3, 3), 0)
-                        result = cv.Laplacian(im, cv.CV_8U, ksize=parameter_values[0])
-                        print(result.dtype)
+                        im = cv.GaussianBlur(images[:,:,j['src_im_ind']], (3, 3), 0)
+                        result = cv.Laplacian(im, cv.CV_8U, ksize=j['parameters'][0])
+                        
                         result = result.astype('uint8')
 
 
-                    elif process_select.get() == "Aesop":
+                    elif process == "Aesop":
                         
-                        temp_image = np.copy(image_selection)
+                        temp_image = np.copy(images[:,:,j['src_im_ind']])
 
                         temp_image[temp_image > 0] = 1
 
-                        if parameter_values[3] == 0:
+                        if j['parameters'][3] == 0:
                             series_val = True
                         else:
                             series_val = False
                         
-                        result = aesop.aesops_Filter(temp_image, kernel_size_start=parameter_values[0], kernel_size_end=parameter_values[1], kernel_step=parameter_values[2], series=series_val, steps=parameter_values[4])
+                        result = aesop.aesops_Filter(temp_image, kernel_size_start=j['parameters'][0], kernel_size_end=j['parameters'][1], kernel_step=j['parameters'][2], series=series_val, steps=j['parameters'][4])
 
                         result[result > 0] = 255
 
-                    elif process_select.get() == "Math":
                     
-                        if (math_type.get() == 'Arithmetic') | (math_type.get() == 'Compare'):
-                            print(const.get())
-                            if const.get() == True:
-                                operand2 = math_constant.get()
+############################################################################################################################################################                    
+                    
+                    elif process in math_list:
+                        
+                        if j['constant_term'] == 'N/A':
+                            operand2 = images[:,:, j['src_im_ind2']]
+                        
+                        else:
+                            operand2 = j['constant_term']
+
+                        if process == 'Add':
+                            result = cv.add(images[:,:,j['src_im_ind']], operand2)
                             
-                            else:
-                                operand2 = images[image_names.index(second_select_src.get())]
-                                print(operand2.dtype)
                         
-                        
+                        elif process == 'Subtract':
+                            result = cv.subtract(images[:,:,j['src_im_ind']], operand2)
+                            
 
-                        elif math_operation.get() == '(im)^n' :
-                            operand2 = math_constant.get()
-                        
-                        if math_operation.get() == 'Add':
-                            result = cv.add(image_selection, operand2)
-                            print(math_operation.get())
-                        
-                        elif math_operation.get() == 'Subtract':
-                            result = cv.subtract(image_selection, operand2)
-                            print(math_operation.get())
-
-                        elif math_operation.get() == 'Multiply':
+                        elif process == 'Multiply':
                             operand2 = operand2.astype('float32') / 255
-                            image_selection.astype('float32')
-                            result = image_selection * operand2
+                            images[:,:,j['src_im_ind']].astype('float32')
+                            result = images[:,:,j['src_im_ind']] * operand2
                             result = result.astype('uint8')
-                            #result = cv.multiply(image_selection, operand2)
-                            print(math_operation.get())
+                            #result = cv.multiply(images[:,:,j['src_im_ind']], operand2)
+                            
 
-                        elif math_operation.get() == 'Divide':
-                            result = cv.divide(image_selection, operand2)
-                            print(math_operation.get())
+                        elif process == 'Divide':
+                            result = cv.divide(images[:,:,j['src_im_ind']], operand2)
+                            
 
-                        elif math_operation.get() == 'Max':
-                            result = cv.max(image_selection, operand2)
-                            print(math_operation.get())
+                        elif process == 'Max':
+                            result = cv.max(images[:,:,j['src_im_ind']], operand2)
+                            
 
-                        elif math_operation.get() == 'Min':
-                            result = cv.min(image_selection, operand2)
-                            print(math_operation.get())
+                        elif process == 'Min':
+                            result = cv.min(images[:,:,j['src_im_ind']], operand2)
+                            
 
-                        elif math_operation.get() == '(im)^n':
-                            result = image_selection.astype('float32')
+                        elif process == '(im)^n':
+                            result = images[:,:,j['src_im_ind']].astype('float32')
                             result = result/255
                             result = cv.pow(result, operand2)
                             result = 255 * result
                             result = result.astype('uint8')
-                            print(math_operation.get())
+                            
 
-                        elif math_operation.get() == 'e^(im)]':
-                            result = image_selection.astype('float32')
-                            print(result.max())
+                        elif process == 'e^(im)]':
+                            result = images[:,:,j['src_im_ind']].astype('float32')
                             result = result/255
-                            print(result.max())
-                            result = np.exp(image_selection)
+                            result = np.exp(images[:,:,j['src_im_ind']])
                             result = 255 * result
                             result = result.astype('uint8')                    
-                            print(math_operation.get())
                             
-                        elif math_operation.get() == 'log(im)':
-                            result = image_selection.astype('float32')
+                            
+                        elif process == 'log(im)':
+                            result = images[:,:,j['src_im_ind']].astype('float32')
                             result = result/255                    
-                            result = np.log(image_selection)
+                            result = np.log(images[:,:,j['src_im_ind']])
                             result = 255 * result
                             result = result.astype('uint8')                      
-                            print(math_operation.get())
-
-                        math_routine()
-
-                    elif process_select.get() == "Thresholding":
-                        print(process_select.get())
-                        if thresh_select.get() == 'Binary':
-                            ret, result = cv.threshold(image_selection, parameter_values[0], parameter_values[1], cv.THRESH_BINARY)
-
-                        elif thresh_select.get() == 'Inverse_Binary':
-                            ret, result = cv.threshold(image_selection, parameter_values[0], parameter_values[1], cv.THRESH_BINARY_INV)
-
-                        elif thresh_select.get() == 'Truncated':
-                            ret, result = cv.threshold(image_selection, parameter_values[0], parameter_values[1], cv.THRESH_TRUNC)
-
-                        elif thresh_select.get() == 'To_Zero':
-                            ret, result = cv.threshold(image_selection, parameter_values[0], parameter_values[1], cv.THRESH_TOZERO)                
-
-                        elif thresh_select.get() == 'Inverse_To_Zero':
-                            ret, result = cv.threshold(image_selection, parameter_values[0], parameter_values[1], cv.THRESH_TOZERO_INV)
-
-                        elif thresh_select.get() == 'Otsu_Bin':
-                            ret, result = cv.threshold(image_selection, parameter_values[0], parameter_values[1], cv.THRESH_BINARY+cv.THRESH_OTSU)                
-
-                        elif thresh_select.get() == 'Triangle_Bin':
-                            ret, result = cv.threshold(image_selection, parameter_values[0], parameter_values[1], cv.THRESH_BINARY+cv.THRESH_TRIANGLE)
-
-                        elif thresh_select.get() == 'Adaptive_Thresh_Mean_C':
-                            result = cv.adaptiveThreshold(image_selection, parameter_values[0], cv.ADAPTIVE_THRESH_MEAN_C, cv.THRESH_BINARY, parameter_values[1], parameter_values[2])
-                            
-                        elif thresh_select.get() == 'Adaptive_Thresh_Gaussian_C':
-                            result = cv.adaptiveThreshold(image_selection, parameter_values[0], cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, parameter_values[1], parameter_values[2])                
-
-                    elif process_select.get() == "Normalize":
-
-                        if norm_select.get() == 'Norm_Inf':
-                            result = cv.normalize(image_selection, result, alpha=parameter_values[0], beta=parameter_values[1], norm_type=cv.NORM_INF, dtype=cv.CV_8U)
-
-                        elif norm_select.get() == 'Norm_L1':
-                            parameter_values[0] = float(parameter_values[0])/255
-                            parameter_values[1] = float(parameter_values[1])/255
-                            print(parameter_values)
-                            
-                            image_selection = (image_selection.astype('float32'))/255
-                            print(image_selection.max(), image_selection.min())
-                            #result = cv.normalize(image_selection, result, alpha=parameter_values[0], beta=parameter_values[1], norm_type=cv.NORM_L1, dtype=cv.CV_32F)
-                            result = cv.normalize(image_selection, result, alpha=1.0, beta=0.0, norm_type=cv.NORM_L1, dtype=cv.CV_32F)
-                            result = result / result.max()
-                            result = (result * 255).astype('uint8')
                             
 
-                        elif norm_select.get() == 'Norm_L2':
-                            parameter_values[0] = float(parameter_values[0])/255
-                            parameter_values[1] = float(parameter_values[1])/255
-                            print(parameter_values)
-                            
-                            image_selection = (image_selection.astype('float32'))/255
-                            print(image_selection.max(), image_selection.min())
-                            #result = cv.normalize(image_selection, result, alpha=parameter_values[0], beta=parameter_values[1], norm_type=cv.NORM_L2, dtype=cv.CV_8U)
-                            result = cv.normalize(image_selection, result, alpha=1.0, beta=0.0, norm_type=cv.NORM_L2, dtype=cv.CV_32F)
-                            result = result / result.max()
-                            result = (result * 255).astype('uint8')
-
-                        elif norm_select.get() == 'Norm_L2_Square':
-                            parameter_values[0] = float(parameter_values[0])/255
-                            parameter_values[1] = float(parameter_values[1])/255
-                            print(parameter_values)
-                            
-                            image_selection = (image_selection.astype('float32'))/255
-                            print(image_selection.max(), image_selection.min())                    
-                            #result = cv.normalize(image_selection, result, alpha=parameter_values[0], beta=parameter_values[1], norm_type=cv.NORM_L2SQR, dtype=cv.CV_8U)
-                            result = cv.normalize(image_selection, result, alpha=1.0, beta=0.0, norm_type=cv.NORM_L2SQR, dtype=cv.CV_32F)
-                            result = result / result.max()
-                            result = (result * 255).astype('uint8')
-
-                        elif norm_select.get() == 'Norm_Hamming':
-                            result = cv.normalize(image_selection, result, alpha=parameter_values[0], beta=parameter_values[1], norm_type=cv.NORM_HAMMING, dtype=cv.CV_8U)
-
-                        elif norm_select.get() == 'Norm_Hamming2':
-                            result = cv.normalize(image_selection, result, alpha=parameter_values[0], beta=parameter_values[1], norm_type=cv.NORM_HAMMING2, dtype=cv.CV_8U)
-
-                        elif norm_select.get() == 'Norm_Relative':
-                            result = cv.normalize(image_selection, result, alpha=parameter_values[0], beta=parameter_values[1], norm_type=cv.NORM_RELATIVE, dtype=cv.CV_8U)
-
-                        elif norm_select.get() == 'Norm_Min_Max':
-                            result = cv.normalize(image_selection, result, alpha=parameter_values[0], beta=parameter_values[1], norm_type=cv.NORM_MINMAX, dtype=cv.CV_8U)
+############################################################################################################################################################                                            
 
 
-                    elif process_select.get() == "Miscellaneous":
+                    elif process == 'Binary':
+                        ret, result = cv.threshold(images[:,:,j['src_im_ind']], j['parameters'][0], j['parameters'][1], cv.THRESH_BINARY)
 
-                        if misc_select.get() == 'Invert':
-                            result = (255 * np.ones(image_selection.shape, dtype='uint8')) - image_selection
+                    elif process == 'Inverse_Binary':
+                        ret, result = cv.threshold(images[:,:,j['src_im_ind']], j['parameters'][0], j['parameters'][1], cv.THRESH_BINARY_INV)
+
+                    elif process == 'Truncated':
+                        ret, result = cv.threshold(images[:,:,j['src_im_ind']], j['parameters'][0], j['parameters'][1], cv.THRESH_TRUNC)
+
+                    elif process == 'To_Zero':
+                        ret, result = cv.threshold(images[:,:,j['src_im_ind']], j['parameters'][0], j['parameters'][1], cv.THRESH_TOZERO)                
+
+                    elif process == 'Inverse_To_Zero':
+                        ret, result = cv.threshold(images[:,:,j['src_im_ind']], j['parameters'][0], j['parameters'][1], cv.THRESH_TOZERO_INV)
+
+                    elif process == 'Otsu_Bin':
+                        ret, result = cv.threshold(images[:,:,j['src_im_ind']], j['parameters'][0], j['parameters'][1], cv.THRESH_BINARY+cv.THRESH_OTSU)                
+
+                    elif process == 'Triangle_Bin':
+                        ret, result = cv.threshold(images[:,:,j['src_im_ind']], j['parameters'][0], j['parameters'][1], cv.THRESH_BINARY+cv.THRESH_TRIANGLE)
+
+                    elif process == 'Adaptive_Thresh_Mean_C':
+                        result = cv.adaptiveThreshold(images[:,:,j['src_im_ind']], j['parameters'][0], cv.ADAPTIVE_THRESH_MEAN_C, cv.THRESH_BINARY, j['parameters'][1], j['parameters'][2])
+                        
+                    elif process == 'Adaptive_Thresh_Gaussian_C':
+                        result = cv.adaptiveThreshold(images[:,:,j['src_im_ind']], j['parameters'][0], cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, j['parameters'][1], j['parameters'][2])                
+
+                    
+
+                    elif process == 'Norm_Inf':
+                        result = cv.normalize(images[:,:,j['src_im_ind']], result, alpha=j['parameters'][0], beta=j['parameters'][1], norm_type=cv.NORM_INF, dtype=cv.CV_8U)
+
+                    elif process == 'Norm_L1':
+                        j['parameters'][0] = float(j['parameters'][0])/255
+                        j['parameters'][1] = float(j['parameters'][1])/255
+                        
+                        
+                        images[:,:,j['src_im_ind']] = (images[:,:,j['src_im_ind']].astype('float32'))/255
+                        
+                        #result = cv.normalize(images[:,:,j['src_im_ind']], result, alpha=j['parameters'][0], beta=j['parameters'][1], norm_type=cv.NORM_L1, dtype=cv.CV_32F)
+                        result = cv.normalize(images[:,:,j['src_im_ind']], result, alpha=1.0, beta=0.0, norm_type=cv.NORM_L1, dtype=cv.CV_32F)
+                        result = result / result.max()
+                        result = (result * 255).astype('uint8')
+                        
+
+                    elif process == 'Norm_L2':
+                        j['parameters'][0] = float(j['parameters'][0])/255
+                        j['parameters'][1] = float(j['parameters'][1])/255
+                        
+                        
+                        images[:,:,j['src_im_ind']] = (images[:,:,j['src_im_ind']].astype('float32'))/255
+                        
+                        #result = cv.normalize(images[:,:,j['src_im_ind']], result, alpha=j['parameters'][0], beta=j['parameters'][1], norm_type=cv.NORM_L2, dtype=cv.CV_8U)
+                        result = cv.normalize(images[:,:,j['src_im_ind']], result, alpha=1.0, beta=0.0, norm_type=cv.NORM_L2, dtype=cv.CV_32F)
+                        result = result / result.max()
+                        result = (result * 255).astype('uint8')
+
+                    elif process == 'Norm_L2_Square':
+                        j['parameters'][0] = float(j['parameters'][0])/255
+                        j['parameters'][1] = float(j['parameters'][1])/255
+                        
+                        
+                        images[:,:,j['src_im_ind']] = (images[:,:,j['src_im_ind']].astype('float32'))/255
+                        
+                        #result = cv.normalize(images[:,:,j['src_im_ind']], result, alpha=j['parameters'][0], beta=j['parameters'][1], norm_type=cv.NORM_L2SQR, dtype=cv.CV_8U)
+                        result = cv.normalize(images[:,:,j['src_im_ind']], result, alpha=1.0, beta=0.0, norm_type=cv.NORM_L2SQR, dtype=cv.CV_32F)
+                        result = result / result.max()
+                        result = (result * 255).astype('uint8')
+
+                    elif process == 'Norm_Hamming':
+                        result = cv.normalize(images[:,:,j['src_im_ind']], result, alpha=j['parameters'][0], beta=j['parameters'][1], norm_type=cv.NORM_HAMMING, dtype=cv.CV_8U)
+
+                    elif process == 'Norm_Hamming2':
+                        result = cv.normalize(images[:,:,j['src_im_ind']], result, alpha=j['parameters'][0], beta=j['parameters'][1], norm_type=cv.NORM_HAMMING2, dtype=cv.CV_8U)
+
+                    elif process == 'Norm_Relative':
+                        result = cv.normalize(images[:,:,j['src_im_ind']], result, alpha=j['parameters'][0], beta=j['parameters'][1], norm_type=cv.NORM_RELATIVE, dtype=cv.CV_8U)
+
+                    elif process == 'Norm_Min_Max':
+                        result = cv.normalize(images[:,:,j['src_im_ind']], result, alpha=j['parameters'][0], beta=j['parameters'][1], norm_type=cv.NORM_MINMAX, dtype=cv.CV_8U)
 
 
-                    elif process_select.get() == "Morphology":
+                    
+
+                    elif process == 'Invert':
+                            result = (255 * np.ones(images[:,:,j['src_im_ind']].shape, dtype='uint8')) - images[:,:,j['src_im_ind']]
+
+
+                    elif process in morph_list:
 
                         # Set the kernel for morphological operation
-                        print(morph_kernel_select.get())
+                        
 
-                        if morph_kernel_select.get() == 'Rectangle':
-                            morph_kernel = cv.getStructuringElement(cv.MORPH_RECT,( parameter_values[0], parameter_values[1]))
+                        if j['kernel'] == 'Rectangle':
+                            morph_kernel = cv.getStructuringElement(cv.MORPH_RECT,( j['parameters'][0], j['parameters'][1]))
 
-                        elif morph_kernel_select.get() == 'Cross':
-                            morph_kernel = cv.getStructuringElement(cv.MORPH_CROSS,( parameter_values[0], parameter_values[1]))
+                        elif j['kernel'] == 'Cross':
+                            morph_kernel = cv.getStructuringElement(cv.MORPH_CROSS,( j['parameters'][0], j['parameters'][1]))
 
-                        elif morph_kernel_select.get() == 'Ellipse':
-                            morph_kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE,( parameter_values[0], parameter_values[1]))
+                        elif j['kernel'] == 'Ellipse':
+                            morph_kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE,( j['parameters'][0], j['parameters'][1]))
 
                         # Apply the morphological operation
 
-                        if morph_select.get() == 'Erode':
-                            result = cv.erode(image_selection, morph_kernel, iterations = parameter_values[2])
+                        if process == 'Erode':
+                            result = cv.erode(images[:,:,j['src_im_ind']], morph_kernel, iterations = j['parameters'][2])
 
-                        elif morph_select.get() == 'Dilate':
-                            result = cv.dilate(image_selection, morph_kernel, iterations = parameter_values[2])
+                        elif process == 'Dilate':
+                            result = cv.dilate(images[:,:,j['src_im_ind']], morph_kernel, iterations = j['parameters'][2])
 
-                        elif morph_select.get() == 'Open':
-                            result = cv.morphologyEx( image_selection, cv.MORPH_OPEN, morph_kernel)
+                        elif process == 'Open':
+                            result = cv.morphologyEx( images[:,:,j['src_im_ind']], cv.MORPH_OPEN, morph_kernel)
 
-                        elif morph_select.get() == 'Close':
-                            result = cv.morphologyEx( image_selection, cv.MORPH_CLOSE, morph_kernel)
+                        elif process == 'Close':
+                            result = cv.morphologyEx( images[:,:,j['src_im_ind']], cv.MORPH_CLOSE, morph_kernel)
+ 
+                            result = cv.morphologyEx( images[:,:,j['src_im_ind']], cv.MORPH_GRADIENT, morph_kernel)
 
-                        elif morph_select.get() == 'Morph_Gradient':
-                            result = cv.morphologyEx( image_selection, cv.MORPH_GRADIENT, morph_kernel)
+                        elif process == 'Top_Hat':
+                            result = cv.morphologyEx( images[:,:,j['src_im_ind']], cv.MORPH_TOPHAT, morph_kernel)
 
-                        elif morph_select.get() == 'Top_Hat':
-                            result = cv.morphologyEx( image_selection, cv.MORPH_TOPHAT, morph_kernel)
+                        elif process == 'Black_Hat':
+                            result = cv.morphologyEx( images[:,:,j['src_im_ind']], cv.MORPH_BLACKHAT, morph_kernel)
 
-                        elif morph_select.get() == 'Black_Hat':
-                            result = cv.morphologyEx( image_selection, cv.MORPH_BLACKHAT, morph_kernel)
+                    images = np.append(images, result[:,:,np.newaxis], axis=2)
 
-                    print(j['process'])
+                    if j['im_name'] in images_save:
+
+                        filepath = batch_folder_name + j['im_name'] + '/' + filename[0] + j['im_name'] + '.jpg'
+                        cv.imwrite(filepath, result)
             
-
+            print('Batch Processing Complete')
 
         batch_process_button = Button(batch_proc_win, text="Process Images", width=16, command=batch_process_images)
         batch_process_button.place(x=115, y=330, anchor=N)               
