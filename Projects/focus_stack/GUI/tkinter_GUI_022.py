@@ -10,370 +10,13 @@ from log_gabor.log_gabor import log_gabor
 import os
 from datetime import datetime
 from aesop import aesop
-from skimage.transform import resize
+from skimage.transform import resize 
 import json
 import time
 from process_and_stack.process_and_stack import Stacking
 
 from numpy.lib.npyio import save
 # from tkmacosx import Button - allows background color and other features not available on macosx
-
-def batch_process(process_summary_filename, image_filenames, process_summary_dict,im_save, batch_stack):
-    t1 = time.time()
-    head, tail = os.path.split(process_summary_filename)
-
-    now = datetime.now()
-    batch_folder_name = head+'/Batch_{}{}{}_{}{}/'.format(now.year, now.month, now.day, now.hour, now.minute)
-    print(batch_folder_name)
-    os.mkdir(batch_folder_name)
-
-    processed_image_folders = []
-
-    for i in im_save:
-
-        if batch_stack == 'batch':
-            processed_image_folders.append(batch_folder_name + i + '/')
-            os.mkdir(processed_image_folders[-1])
-
-
-    for i in image_filenames:
-        t2 = time.time()
-        base_color = cv.imread(i, cv.IMREAD_COLOR)
-        imgG = cv.cvtColor(base_color, cv.COLOR_BGR2GRAY)
-        images = list([imgG])
-
-        head, tail = os.path.split(i)
-        filename = os.path.splitext(tail)
-        
-        for j in process_summary_dict:
-            t3 = time.time()
-            print(j['im_name'])
-            print(im_save)
-            
-            im_name_string = 'Image Name: {}'.format(filename[0])
-            im_prog_string = 'Image: {} of {}'.format(image_filenames.index(i)+1, len(image_filenames))
-            process_name_string = 'Proocess Name: {}'.format(j['im_name'])
-            procees_prog_string = 'Proocess: {} of {}'.format(process_summary_dict.index(j)+1, len(process_summary_dict))
-
-            print('\n\n')
-            print(im_name_string)
-            print(im_prog_string)
-            print(process_name_string)
-            print(procees_prog_string)
-
-            
-
-            process = j['process']
-
-            math_list = ['Add', 'Subtract', 'Multiply', 'Divide', 'Max', 'Min', '(im)^n']
-            morph_list = ['Erode', 'Dilate', 'Open', 'Close', 'Morph_Gradient', 'Top_Hat', 'Black_Hat']
-
-            if process == "Gabor":
-
-                kernel = cv.getGaborKernel((j['parameters'][0], j['parameters'][0]), j['parameters'][1], j['parameters'][2] * np.pi, j['parameters'][3] * np.pi, j['parameters'][4], j['parameters'][5] * np.pi, ktype=cv.CV_32F)
-
-                result = cv.filter2D(images[j['src_im_ind']], cv.CV_8U, kernel)
-                
-                
-
-
-            elif process == "Log_Gabor":
-
-                result, LG = log_gabor(images[j['src_im_ind']], j['parameters'][0], j['parameters'][1], j['parameters'][2], j['parameters'][3])
-                histogram = np.histogram(result.ravel(), bins=256, range=[0,256])
-
-                if j['LG_Normalize'] == True:
-                    peak = (np.where(histogram[0] == np.max(histogram[0])))[0][0]
-                    if peak <= 127:
-                        result[result < peak] = peak + (peak - result[result < peak])
-                    elif peak > 127:
-                        result[result > peak] = peak - (result[result > peak] - peak)
-                        result = (255 * np.ones(result.shape, dtype='uint8')) - result                     
-
-                if j['truncate'] == True:
-                    
-                    zeroed = np.where([histogram[0] > 10**j['trunc_exp']])[1]
-
-                    for k in zeroed:
-                        result[result==k]=0
-
-                    result[result>0] = 255
-
-                
-
-
-            elif process == "Gauss":
-
-                result = cv.GaussianBlur(images[j['src_im_ind']], (j['parameters'][0], j['parameters'][0]), 0)
-                
-
-            elif process == "Canny":
-
-                result = cv.Canny(images[j['src_im_ind']], j['parameters'][1], j['parameters'][0])
-                                
-
-            elif process == "Laplace":
-
-                im = cv.GaussianBlur(images[j['src_im_ind']], (3, 3), 0)
-                result = cv.Laplacian(im, cv.CV_8U, ksize=j['parameters'][0])
-                
-                result = result.astype('uint8')
-
-
-            elif process == "Aesop":
-                
-                temp_image = np.copy(images[j['src_im_ind']])
-
-                temp_image[temp_image > 0] = 1
-
-                if j['parameters'][3] == 0:
-                    series_val = True
-                else:
-                    series_val = False
-                
-                result = aesop.aesops_Filter(temp_image, kernel_size_start=j['parameters'][0], kernel_size_end=j['parameters'][1], kernel_step=j['parameters'][2], series=series_val, steps=j['parameters'][4])
-
-                result[result > 0] = 255
-
-            
-            ################################################################################################################################################                    
-            
-            elif process in math_list:
-                
-                if j['constant_term'] == 'N/A':
-                    operand2 = images[j['src_im_ind2']]
-                
-                else:
-                    operand2 = j['constant_term']
-
-                if process == 'Add':
-                    result = cv.add(images[j['src_im_ind']], operand2)
-                    
-                
-                elif process == 'Subtract':
-                    result = cv.subtract(images[j['src_im_ind']], operand2)
-                    
-
-                elif process == 'Multiply':
-                    operand2 = operand2.astype('float32') / 255
-                    images[j['src_im_ind']].astype('float32')
-                    result = images[j['src_im_ind']] * operand2
-                    result = result.astype('uint8')
-                    #result = cv.multiply(images[j['src_im_ind']], operand2)
-                    
-
-                elif process == 'Divide':
-                    result = cv.divide(images[j['src_im_ind']], operand2)
-                    
-
-                elif process == 'Max':
-                    result = cv.max(images[j['src_im_ind']], operand2)
-                    
-
-                elif process == 'Min':
-                    result = cv.min(images[j['src_im_ind']], operand2)
-                    
-
-                elif process == '(im)^n':
-                    result = images[j['src_im_ind']].astype('float32')
-                    result = result/255
-                    result = cv.pow(result, operand2)
-                    result = 255 * result
-                    result = result.astype('uint8')
-                    
-
-                elif process == 'e^(im)]':
-                    result = images[j['src_im_ind']].astype('float32')
-                    result = result/255
-                    result = np.exp(images[j['src_im_ind']])
-                    result = 255 * result
-                    result = result.astype('uint8')                    
-                    
-                    
-                elif process == 'log(im)':
-                    result = images[j['src_im_ind']].astype('float32')
-                    result = result/255                    
-                    result = np.log(images[j['src_im_ind']])
-                    result = 255 * result
-                    result = result.astype('uint8')                      
-                    
-
-            ############################################################################################################################################################                                            
-
-
-            elif process == 'Binary':
-                ret, result = cv.threshold(images[j['src_im_ind']], j['parameters'][0], j['parameters'][1], cv.THRESH_BINARY)
-
-            elif process == 'Inverse_Binary':
-                ret, result = cv.threshold(images[j['src_im_ind']], j['parameters'][0], j['parameters'][1], cv.THRESH_BINARY_INV)
-
-            elif process == 'Truncated':
-                ret, result = cv.threshold(images[j['src_im_ind']], j['parameters'][0], j['parameters'][1], cv.THRESH_TRUNC)
-
-            elif process == 'To_Zero':
-                ret, result = cv.threshold(images[j['src_im_ind']], j['parameters'][0], j['parameters'][1], cv.THRESH_TOZERO)                
-
-            elif process == 'Inverse_To_Zero':
-                ret, result = cv.threshold(images[j['src_im_ind']], j['parameters'][0], j['parameters'][1], cv.THRESH_TOZERO_INV)
-
-            elif process == 'Otsu_Bin':
-                ret, result = cv.threshold(images[j['src_im_ind']], j['parameters'][0], j['parameters'][1], cv.THRESH_BINARY+cv.THRESH_OTSU)                
-
-            elif process == 'Triangle_Bin':
-                ret, result = cv.threshold(images[j['src_im_ind']], j['parameters'][0], j['parameters'][1], cv.THRESH_BINARY+cv.THRESH_TRIANGLE)
-
-            elif process == 'Adaptive_Thresh_Mean_C':
-                result = cv.adaptiveThreshold(images[j['src_im_ind']], j['parameters'][0], cv.ADAPTIVE_THRESH_MEAN_C, cv.THRESH_BINARY, j['parameters'][1], j['parameters'][2])
-                
-            elif process == 'Adaptive_Thresh_Gaussian_C':
-                result = cv.adaptiveThreshold(images[j['src_im_ind']], j['parameters'][0], cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, j['parameters'][1], j['parameters'][2])                
-
-            elif process == 'Trunc_Hist':
-                result = np.copy(images[j['src_im_ind']])
-                histogram = np.histogram(result.ravel(), bins=256, range=[0,256])
-                zeroed = np.where([histogram[0] > 10**(j['parameters'][0])])[1]
-                for k in zeroed:
-                    result[result==k]=0
-
-            elif process == 'Norm_Inf':
-                result = cv.normalize(images[j['src_im_ind']], result, alpha=j['parameters'][0], beta=j['parameters'][1], norm_type=cv.NORM_INF, dtype=cv.CV_8U)
-
-            elif process == 'Norm_L1':
-                j['parameters'][0] = float(j['parameters'][0])/255
-                j['parameters'][1] = float(j['parameters'][1])/255
-                
-                
-                images[j['src_im_ind']] = (images[j['src_im_ind']].astype('float32'))/255
-                
-                #result = cv.normalize(images[j['src_im_ind']], result, alpha=j['parameters'][0], beta=j['parameters'][1], norm_type=cv.NORM_L1, dtype=cv.CV_32F)
-                result = cv.normalize(images[j['src_im_ind']], result, alpha=1.0, beta=0.0, norm_type=cv.NORM_L1, dtype=cv.CV_32F)
-                result = result / result.max()
-                result = (result * 255).astype('uint8')
-                
-
-            elif process == 'Norm_L2':
-                j['parameters'][0] = float(j['parameters'][0])/255
-                j['parameters'][1] = float(j['parameters'][1])/255
-                
-                
-                images[j['src_im_ind']] = (images[j['src_im_ind']].astype('float32'))/255
-                
-                #result = cv.normalize(images[j['src_im_ind']], result, alpha=j['parameters'][0], beta=j['parameters'][1], norm_type=cv.NORM_L2, dtype=cv.CV_8U)
-                result = cv.normalize(images[j['src_im_ind']], result, alpha=1.0, beta=0.0, norm_type=cv.NORM_L2, dtype=cv.CV_32F)
-                result = result / result.max()
-                result = (result * 255).astype('uint8')
-
-            elif process == 'Norm_L2_Square':
-                j['parameters'][0] = float(j['parameters'][0])/255
-                j['parameters'][1] = float(j['parameters'][1])/255
-                
-                
-                images[j['src_im_ind']] = (images[j['src_im_ind']].astype('float32'))/255
-                
-                #result = cv.normalize(images[j['src_im_ind']], result, alpha=j['parameters'][0], beta=j['parameters'][1], norm_type=cv.NORM_L2SQR, dtype=cv.CV_8U)
-                result = cv.normalize(images[j['src_im_ind']], result, alpha=1.0, beta=0.0, norm_type=cv.NORM_L2SQR, dtype=cv.CV_32F)
-                result = result / result.max()
-                result = (result * 255).astype('uint8')
-
-            elif process == 'Norm_Hamming':
-                result = cv.normalize(images[j['src_im_ind']], result, alpha=j['parameters'][0], beta=j['parameters'][1], norm_type=cv.NORM_HAMMING, dtype=cv.CV_8U)
-
-            elif process == 'Norm_Hamming2':
-                result = cv.normalize(images[j['src_im_ind']], result, alpha=j['parameters'][0], beta=j['parameters'][1], norm_type=cv.NORM_HAMMING2, dtype=cv.CV_8U)
-
-            elif process == 'Norm_Relative':
-                result = cv.normalize(images[j['src_im_ind']], result, alpha=j['parameters'][0], beta=j['parameters'][1], norm_type=cv.NORM_RELATIVE, dtype=cv.CV_8U)
-
-            elif process == 'Norm_Min_Max':
-                result = cv.normalize(images[j['src_im_ind']], result, alpha=j['parameters'][0], beta=j['parameters'][1], norm_type=cv.NORM_MINMAX, dtype=cv.CV_8U)
-
-
-            
-
-            elif process == 'Invert':
-                result = (255 * np.ones(images[j['src_im_ind']].shape, dtype='uint8')) - images[j['src_im_ind']]
-
-            elif process == 'Resize':
-                if j['Resize_Op'] == 'Reduce':
-                    scale = j['parameters'][0]
-                    scaled_size = (int(images[j['src_im_ind']].shape[0] * scale),int(images[j['src_im_ind']].shape[1] * j['parameters'][0]) )
-                    result = resize(images[j['src_im_ind']], scaled_size, anti_aliasing=True)
-                    result = (result*255).astype('uint8')
-
-                elif j['Resize_Op'] == 'Match_Size':
-                    result = resize(images[j['src_im_ind']], images[j['parameters'][0]].shape)
-                    result = (result*255).astype('uint8')
-
-            elif process in morph_list:
-
-                # Set the kernel for morphological operation
-                
-
-                if j['kernel'] == 'Rectangle':
-                    morph_kernel = cv.getStructuringElement(cv.MORPH_RECT,( j['parameters'][0], j['parameters'][1]))
-
-                elif j['kernel'] == 'Cross':
-                    morph_kernel = cv.getStructuringElement(cv.MORPH_CROSS,( j['parameters'][0], j['parameters'][1]))
-
-                elif j['kernel'] == 'Ellipse':
-                    morph_kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE,( j['parameters'][0], j['parameters'][1]))
-
-                # Apply the morphological operation
-
-                if process == 'Erode':
-                    result = cv.erode(images[j['src_im_ind']], morph_kernel, iterations = j['parameters'][2])
-
-                elif process == 'Dilate':
-                    result = cv.dilate(images[j['src_im_ind']], morph_kernel, iterations = j['parameters'][2])
-
-                elif process == 'Open':
-                    result = cv.morphologyEx( images[j['src_im_ind']], cv.MORPH_OPEN, morph_kernel)
-
-                elif process == 'Close':
-                    result = cv.morphologyEx( images[j['src_im_ind']], cv.MORPH_CLOSE, morph_kernel)
-
-                elif process == 'Morph_Gradient':
-                    result = cv.morphologyEx( images[j['src_im_ind']], cv.MORPH_GRADIENT, morph_kernel)
-
-                elif process == 'Top_Hat':
-                    result = cv.morphologyEx( images[j['src_im_ind']], cv.MORPH_TOPHAT, morph_kernel)
-
-                elif process == 'Black_Hat':
-                    result = cv.morphologyEx( images[j['src_im_ind']], cv.MORPH_BLACKHAT, morph_kernel)
-
-            images.append(result)
-
-            if j['im_name'] in im_save:
-
-                if batch_stack == 'batch':
-
-                    filepath = batch_folder_name + j['im_name'] + '/' + filename[0] + j['im_name'] + '.jpg'
-                    cv.imwrite(filepath, result)
-            print(time.time()-t3)
-            
-        if batch_stack == 'stack':
-            try:
-                color[image_filenames.index(i),:,:,:] = base_color
-                mask[image_filenames.index(i),:,:] = result            
-            except:
-                color = np.copy(base_color)
-                color = color[np.newaxis,:,:,:]
-                mask = np.copy(result)
-                mask = mask[np.newaxis,:,:]
-        
-        print(time.time() - t2)
-
-    print(time.time()-t1)
-
-    if batch_stack == 'stack':
-        return color, mask
-
-
-
-
-    
-
-#------------------------------------------------------------------------------------------------------------------------
 
 def plot_hist(image, title):
     hist_figure = plt.figure(title)
@@ -1791,8 +1434,8 @@ def open_batch_proc():
             global images_save
 
             batch_proc_win.destroy()
-#-----------------------------------------------------------------------------------------------------------------------
-            batch_process(process_summary_filename, image_filenames, process_summary_dict, images_save, 'batch')
+
+            Stacking.batch_process(process_summary_filename, image_filenames, process_summary_dict, images_save, 'batch')
             
             print('Batch Processing Complete')
 
@@ -1803,19 +1446,105 @@ def open_batch_proc():
     image_select_window_button = Button(batch_proc_win, text="Next : Select Images", command=image_select_window)
     image_select_window_button.place(x=375, y=150, anchor=N)
 
+
+######################################       Open the focus stacking window    ################################################    
+
+def focus_stack_proc():
+
+    global focus_stack_win
+
+    focus_stack_win = Toplevel()
+    focus_stack_win.title("Focus Stacking - Process Selection")
+    focus_stack_win.geometry("200x100")
+
+    def image_selection_window():
+        
+        global focus_stack_win
+
+        try:
+            focus_stack_win.destroy()
+        except:
+            pass
+
+        image_filenames = filedialog.askopenfilenames(initialdir="/Users/anthonyesposito/Pictures", title="Select Images for Batch Processing", filetypes=(('jpg files', '*.jpg'),('JPG files', '*.JPG'), ('png files', '*.png')))
+
+        image_names = []
+
+        for path in image_filenames:
+            head, tail = os.path.split(path)
+            image_names.append(tail)
+
+        for i in image_names:
+            print(i)
+
+        focus_stack_win = Toplevel()
+        focus_stack_win.title("Batch Processing - Image Save Selection")
+        focus_stack_win.geometry("250x370")
+
+        image_names_tk = StringVar(value=image_names)
+
+        Label(focus_stack_win, text="Images to be Processed").place(x=115, y=10, anchor=N)
+        images_list_sb = Scrollbar(focus_stack_win)
+        images_list_sb.place(x=210,y=40, height=255)
+        images_list = Listbox(focus_stack_win, listvariable=image_names_tk, height=15, selectmode='extended', yscrollcommand = images_list_sb.set)
+        images_list.place(x = 115, y=40, anchor=N)
+
+        select_new_set_button = Button(focus_stack_win, text="Select a New Image Set", width=16, command=image_selection_window)
+        select_new_set_button.place(x=115, y=300, anchor=N)
+
+        def stack_and_save():
+
+            global process_summary_dict
+            
+            output_filename = filedialog.asksaveasfilename()
+
+            images, masks, histograms = Stacking.batch_process(None, image_filenames, process_summary_dict, None, 'stack')
+
+            order, trans_on = Stacking.image_sort(images, histograms, hist_min=10, hist_max=255)
+
+            Stacking.reg_comb(images, order, trans_on, masks, output_filename)
+            
+            pass
+
+        focus_stack_button = Button(focus_stack_win, text="Stack Images", width=16, command=stack_and_save)
+        focus_stack_button.place(x=115, y=330, anchor=N)    
+
+    def default_process():
+        pass
     
+    def user_select_process():
+
+        global process_summary_dict
+
+        process_summary_filename = filedialog.askopenfilename(initialdir="/Users/anthonyesposito/Pictures", title="Select JSON Process Summary File", filetypes=(('json files', '*.json'),('JPG files', '*.JPG'), ('png files', '*.png')))
+        
+        proc_summ_json = open(process_summary_filename)
+        
+        process_summary_dict = json.load(proc_summ_json)
+
+        image_selection_window()
+
+    dev_im_proc_button = Button(focus_stack_win, padx=20, pady=20, text="Default Process", command=user_select_process)
+    dev_im_proc_button.place(relx=.1, relwidth=.8, rely=.1, relheight=.35)
+
+    dev_im_proc_button = Button(focus_stack_win, padx=20, pady=20, text="User Selected", command=user_select_process)
+    dev_im_proc_button.place(relx=.1, relwidth=.8, rely=.55, relheight=.35)
 
 
-# Set up the action buttons on the main window
+
+######################################       Set Up Main Window    ################################################
 
 dev_im_proc_button = Button(root, padx=20, pady=20, text="Develop Image Process", command=open_proc_dev_file)
-dev_im_proc_button.place(relx=.1, relwidth=.8, rely=.3, relheight=.2)
+dev_im_proc_button.place(relx=.1, relwidth=.8, rely=.25, relheight=.15)
 
 batch_proc_button = Button(root, padx=20, pady=20, text="Batch Processing", command=open_batch_proc)
-batch_proc_button.place(relx=.1, relwidth=.8, rely=.55, relheight=.2)
+batch_proc_button.place(relx=.1, relwidth=.8, rely=.45, relheight=.15)
+
+focus_stack_button = Button(root, padx=20, pady=20, text="Focus Stack", command=focus_stack_proc)
+focus_stack_button.place(relx=.1, relwidth=.8, rely=.65, relheight=.15)
 
 quit_button = Button(root, padx=20, pady=20, text="Quit", command=root.quit)
-quit_button.place(relx=.1, relwidth=.8, rely=.8, relheight=.15)
+quit_button.place(relx=.1, relwidth=.8, rely=.85, relheight=.1)
 
 def on_closing():
     if messagebox.askokcancel("Quit", "Are you sure you would like to quit?"):

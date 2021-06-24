@@ -18,7 +18,7 @@ class Stacking:
 
         # retrieve the list of filenames for images in the directory.
 
-        b = glob.glob(directory + '*' + ext) 
+        
 
         '''
         If a folder of transformed images already exists, get the list of images in the transformed directory.
@@ -109,7 +109,8 @@ class Stacking:
         if not os.path.exists(directory + 'transform/'):
 
             # Set the transformed flag value to False and create the file_num array
-
+            b = glob.glob(directory + '*' + ext) 
+            
             transformed = False
             lap_mask = None
             file_nums = np.zeros(len(b))
@@ -392,7 +393,7 @@ class Stacking:
         
             
         lap_mask_sum = lap_mask_float.sum(axis=0)
-        
+         
         for i in range(lap_mask.shape[0]):
             t4 = time.time()
             lap_mask_norm[i][lap_mask_sum>0] = lap_mask_float[i][lap_mask_sum>0] / lap_mask_sum[lap_mask_sum>0]
