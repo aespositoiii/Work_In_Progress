@@ -54,6 +54,7 @@ def proc_dev_interface():
                     save_process()
             proc_dev_win.destroy()
             cv.destroyAllWindows()
+            plt.close('all')
             dev_im_proc_button["state"] = "normal"
             batch_proc_button["state"] = "normal"
     plt.close('all')
@@ -313,6 +314,7 @@ def proc_dev_interface():
                 norm_ops_frame.place(x=10, y=70+len(norm_option)*30, width=340, height=230)
 
                 parameter_list = process_ops_dict["Normalize"][1]
+                
                 for parameters in parameter_list:
                     exec( "global {}_scale".format(parameters[0]), globals())
                     exec( "{}_scale = Scale(norm_ops_frame, label = '{}', from_= {}, to= {}, resolution = {}, orient= HORIZONTAL, length=300)".format((parameters[0]), (parameters[0]+parameters[1]), parameters[2], parameters[3], parameters[4]), globals())
@@ -717,6 +719,9 @@ def proc_dev_interface():
                 elif norm_select.get() == 'Norm_Min_Max':
                     result = cv.normalize(image_selection, result, alpha=parameter_values[0], beta=parameter_values[1], norm_type=cv.NORM_MINMAX, dtype=cv.CV_8U)
 
+                elif norm_select.get() == 'Norm_Shift':
+                    result = cv.normalize(image_selection, result, alpha=1, beta=(image_selection.max() - image_selection.min()+1), norm_type=cv.NORM_MINMAX, dtype=cv.CV_8U)
+
 
             elif process_select.get() == "Miscellaneous":
 
@@ -1107,7 +1112,8 @@ def proc_dev_interface():
                                                 #'Norm_Hamming', 
                                                 #'Norm_Hamming2', 
                                                 #'Norm_Relative', 
-                                                'Norm_Min_Max'],
+                                                'Norm_Min_Max',
+                                                'Norm_Shift'],
                                             
                                             [   ['Alpha', ' - lower bound or norm value', 0, 255, 1],
                                                 ['beta', ' - upper bound or N/A', 0,255,1]]],
@@ -1496,7 +1502,7 @@ def focus_stack_proc():
 
             global process_summary_dict
             
-            output_filename = filedialog.asksaveasfilename()
+            output_filename = filedialog.asksaveasfilename() + '.jpg'
 
             images, masks, histograms = Stacking.batch_process(None, image_filenames, process_summary_dict, None, 'stack')
 
