@@ -807,12 +807,13 @@ def proc_dev_interface():
             global truncate_scale
 
             apply_button['state'] = 'disabled'
-
+            '''
             try:
                 if 'normal' == save_mask_win.state():
                     save_mask_button['state'] = 'disabled'
             except:
                 save_mask_button['state'] = 'normal'
+            '''
             save_process_button['state'] = 'normal' 
 
             #image_names.append(process_select.get()+ '_' + str(mask_count) + '_' + str(image_names.index(image_select_src.get())))
@@ -1035,7 +1036,7 @@ def proc_dev_interface():
         apply_button = Button(proc_dev_win, text="Apply Result", state=DISABLED, padx= 10, pady=10, command=apply_result)
         apply_button.place(x= 410, width=100, y = 700, height= 30)
         
-        save_mask_button = Button(proc_dev_win, text="Display/Save", state=DISABLED, padx= 10, pady=10, command=save_mask)
+        save_mask_button = Button(proc_dev_win, text="Display/Save", padx= 10, pady=10, command=save_mask)
         save_mask_button.place(x= 520, width=100, y = 660, height= 30)
 
         save_process_button =  Button(proc_dev_win, text="Save Process", state=DISABLED, padx= 10, pady=10, command=save_process)
@@ -1501,14 +1502,18 @@ def focus_stack_proc():
         def stack_and_save():
 
             global process_summary_dict
+
+            t_start = time.time()
             
-            output_filename = filedialog.asksaveasfilename() + '.jpg'
+            output_filename = filedialog.asksaveasfilename()
 
             images, masks, histograms = Stacking.batch_process(None, image_filenames, process_summary_dict, None, 'stack')
 
             order, trans_on = Stacking.image_sort(images, histograms, hist_min=10, hist_max=255)
 
             Stacking.reg_comb(images, order, trans_on, masks, output_filename)
+
+            print('Total Processing Time : ', time.time() - t_start, ' s')
             
             pass
 
@@ -1516,8 +1521,13 @@ def focus_stack_proc():
         focus_stack_button.place(x=115, y=330, anchor=N)    
 
     def default_process():
-        pass
-    
+
+        global process_summary_dict
+
+        process_summary_dict = [{"im_name": "Resize_1_0", "src_im_ind": 0, "source_im_name": "Base_Image", "process": "Resize", "Resize_Op": "Reduce", "parameters": [0.25], "scale": [1000, 1500]}, {"im_name": "Log_Gabor_2_1", "src_im_ind": 1, "source_im_name": "Resize_1_0", "process": "Log_Gabor", "parameters": [700, 0.53, 0.0, 3.0], "LG_Normalize": True, "truncate": False}, {"im_name": "Norm_Shift_3_2", "src_im_ind": 2, "source_im_name": "Log_Gabor_2_1", "process": "Norm_Shift", "parameters": [0, 0]}, {"im_name": "Trunc_Hist_4_3", "src_im_ind": 3, "source_im_name": "Norm_Shift_3_2", "process": "Trunc_Hist", "parameters": [4.5]}, {"im_name": "Binary_5_4", "src_im_ind": 4, "source_im_name": "Trunc_Hist_4_3", "process": "Binary", "parameters": [0, 255]}, {"im_name": "Aesop_6_5", "src_im_ind": 5, "source_im_name": "Binary_5_4", "process": "Aesop", "parameters": [19, 15, 1, 0, 1]}, {"im_name": "Open_7_6", "src_im_ind": 6, "source_im_name": "Aesop_6_5", "process": "Open", "kernel": "Ellipse", "parameters": [13, 13]}, {"im_name": "Compare_8_4_7", "src_im_ind": 4, "source_im_name": "Trunc_Hist_4_3", "src_im_ind2": 7, "source_im_name2": "Open_7_6", "process": "Min", "constant_term": "N/A"}, {"im_name": "Gauss_9_8", "src_im_ind": 8, "source_im_name": "Compare_8_4_7", "process": "Gauss", "parameters": [45]}, {"im_name": "Resize_10_9", "src_im_ind": 9, "source_im_name": "Gauss_9_8", "process": "Resize", "Resize_Op": "Match_Size", "parameters": [0], "match_im_size": "Base_Image", "match_im_size_ind": 0}]
+
+        image_selection_window()
+
     def user_select_process():
 
         global process_summary_dict
@@ -1530,11 +1540,11 @@ def focus_stack_proc():
 
         image_selection_window()
 
-    dev_im_proc_button = Button(focus_stack_win, padx=20, pady=20, text="Default Process", command=user_select_process)
-    dev_im_proc_button.place(relx=.1, relwidth=.8, rely=.1, relheight=.35)
+    dev_im_proc_button_def = Button(focus_stack_win, padx=20, pady=20, text="Default Process", command=default_process)
+    dev_im_proc_button_def.place(relx=.1, relwidth=.8, rely=.1, relheight=.35)
 
-    dev_im_proc_button = Button(focus_stack_win, padx=20, pady=20, text="User Selected", command=user_select_process)
-    dev_im_proc_button.place(relx=.1, relwidth=.8, rely=.55, relheight=.35)
+    dev_im_proc_button_user = Button(focus_stack_win, padx=20, pady=20, text="User Selected", command=user_select_process)
+    dev_im_proc_button_user.place(relx=.1, relwidth=.8, rely=.55, relheight=.35)
 
 
 
